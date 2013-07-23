@@ -1,3 +1,7 @@
+1.0.2.0
+-----
+* Zmiany w obsłudze okna kontaktów.
+
 1.0.1.0
 -----
 * Enumeracja okien po załadowaniu wtyczki i nadawanie im przeźroczystości oraz ustawianie nowych procedur.
