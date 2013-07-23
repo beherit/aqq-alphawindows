@@ -31,6 +31,13 @@ __fastcall TSettingsForm::TSettingsForm(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TSettingsForm::WMTransparency(TMessage &Message)
+{
+  Application->ProcessMessages();
+  sSkinProvider->BorderForm->UpdateExBordersPos(true,(int)Message.LParam);
+}
+//---------------------------------------------------------------------------
+
 void __fastcall TSettingsForm::FormCreate(TObject *Sender)
 {
   //Wlaczona zaawansowana stylizacja okien
@@ -138,7 +145,6 @@ void __fastcall TSettingsForm::sTrackBarChange(TObject *Sender)
 	ValueLabel->Caption = sTrackBar->Position;
 	//Podgl¹d zmian na zywo
 	SetAlphaEx(255-sTrackBar->Position);
-	sSkinProvider->BorderForm->UpdateExBordersPos(true,255-sTrackBar->Position);
   }
 }
 //---------------------------------------------------------------------------
