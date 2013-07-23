@@ -1,0 +1,1 @@
+Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.
