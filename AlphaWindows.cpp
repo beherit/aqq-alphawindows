@@ -8,8 +8,8 @@
 #include <inifiles.hpp>
 #include <IdHashMessageDigest.hpp>
 #define ALPHAWINDOWS_OLDPROC L"AlphaWindows/OldProc"
-#define ALPHAWINDOWS_SETTRANSPARENCY L"AlphaWindows/SetTransparency"
 #define TABKIT_OLDPROC L"TabKit/OldProc"
+#define WM_ALPHAWINDOWS (WM_USER + 666)
 
 int WINAPI DllEntryPoint(HINSTANCE hinst, unsigned long reason, void* lpReserved)
 {
@@ -31,7 +31,7 @@ struct TWinProcTable
   WNDPROC OldProc;
   WNDPROC CurrentProc;
 };
-TWinProcTable WinProcTable[30];
+TWinProcTable WinProcTable[60];
 //PID procesu
 DWORD ProcessPID;
 //Uchwyt do aplikacji
@@ -42,8 +42,16 @@ HWND hFrmMain;
 HWND hFrmSend;
 //Uchwyt do okna z chmurka informacyjna
 HWND hFrmMiniStatus;
-//Uchwyr do okna odtwarzacza YouTube
+//Uchwyt do okna "Daj mi znac"
+HWND hFrmInfoAlert;
+//Uchwyt do okna tworzenia wycinka
+HWND hFrmPos;
+//Uchwyt do okna odtwarzacza YouTube
 HWND hFrmYTMovie;
+//Uchwyt do okna VOIP
+HWND hFrmVOIP;
+//Uchwyt do okna pogladu kamerki
+HWND hFrmVideoPreview;
 //Uchwyt do okna timera
 HWND hTimerFrm;
 //Uchwyt do ostatnio aktywnego okna
@@ -62,7 +70,6 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-AQQ-HOOKS----------------------------------------------------------
 int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
-int __stdcall OnPrimaryTab(WPARAM wParam, LPARAM lParam);
 int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam);
 int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
 int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam);
@@ -136,36 +143,10 @@ bool ChkThemeGlowing()
 }
 //---------------------------------------------------------------------------
 
-//Szukanie uchwytu do okna kontaktow
-bool CALLBACK FindFrmMain(HWND hwnd, LPARAM)
-{
-  //Pobranie klasy okna
-  wchar_t WClassName[128];
-  GetClassNameW(hwnd, WClassName, sizeof(WClassName));
-  //Sprawdenie klasy okna
-  if((UnicodeString)WClassName=="TfrmMain")
-  {
-	//Pobranie PID okna
-	DWORD PID;
-	GetWindowThreadProcessId(hwnd, &PID);
-	//Porownanie PID okna
-	if(PID==ProcessPID)
-	{
-	  //Przypisanie uchwytu
-	  hFrmMain = hwnd;
-	  //Pobranie uchwytu do aplikacji
-	  hAppHandle = (HINSTANCE)GetWindowLong(hFrmMain,GWLP_HINSTANCE);
-	  return false;
-	}
-  }
-  return true;
-}
-//---------------------------------------------------------------------------
-
 //Pobieranie indeksu wolnego rekordu
 int ReciveFreeIdx()
 {
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
 	if(!WinProcTable[Count].hwnd)
 	 return Count;
@@ -177,7 +158,7 @@ int ReciveFreeIdx()
 //Pobieranie starej procki na podstawie uchwytu okna
 WNDPROC ReciveOldProc(HWND hwnd)
 {
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
 	if(WinProcTable[Count].hwnd==hwnd)
 	 return WinProcTable[Count].OldProc;
@@ -189,7 +170,7 @@ WNDPROC ReciveOldProc(HWND hwnd)
 //Pobieranie akualnej procki na podstawie uchwytu okna
 WNDPROC ReciveCurrentProc(HWND hwnd)
 {
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
 	if(WinProcTable[Count].hwnd==hwnd)
 	 return WinProcTable[Count].CurrentProc;
@@ -201,7 +182,7 @@ WNDPROC ReciveCurrentProc(HWND hwnd)
 //Pobieranie indeksu rekordu na podstawie uchwytu okna
 int ReciveIdx(HWND hwnd)
 {
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
 	if(WinProcTable[Count].hwnd==hwnd)
 	 return Count;
@@ -213,20 +194,18 @@ int ReciveIdx(HWND hwnd)
 //Ustawianie przezroczystosci dla danego okna
 void SetAlphaWnd(HWND hwnd)
 {
-  /*if(hwnd!=hFrmYTMovie)
+  //Okno jest widoczne
+  if(IsWindowVisible(hwnd))
   {
-	long exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-	if(!(exStyle & WS_EX_LAYERED)) SetWindowLong(hwnd, GWL_EXSTYLE, exStyle|WS_EX_LAYERED);
-	Vcl::Forms::SetLayeredWindowAttributes((int)hwnd, 0, AlphaValue, LWA_ALPHA);
-  }*/
-  //Ustawienie przezroczystosci
-  PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)hwnd,(LPARAM)AlphaValue);
-  //Wyslanie informacji o nadaniu przezroczystosci
-  TPluginHook PluginHook;
-  PluginHook.HookName = ALPHAWINDOWS_SETTRANSPARENCY;
-  PluginHook.wParam = (WPARAM)AlphaValue;
-  PluginHook.lParam = (LPARAM)hwnd;
-  PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
+	//Ustawienie przezroczystosci
+	PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)hwnd,(LPARAM)AlphaValue);
+	//Wylaczanie przezroczystosci dla danych okien
+	if((hwnd==hFrmPos)||(hwnd==hFrmYTMovie)||(hwnd==hFrmVOIP)||(hwnd==hFrmVideoPreview))
+	 Vcl::Forms::SetLayeredWindowAttributes((int)hwnd, 0, 255, LWA_ALPHA);
+	//Wysylanie informacji o zmianie przezroczystosci do okna z wtyczki
+	if(hAppHandle!=(HINSTANCE)GetWindowLong(hwnd,GWLP_HINSTANCE))
+	 SendMessage(hwnd,WM_ALPHAWINDOWS,0,(LPARAM)AlphaValue);
+  }
 }
 //---------------------------------------------------------------------------
 
@@ -234,7 +213,7 @@ void SetAlphaWnd(HWND hwnd)
 void SetAlpha()
 {
   //Przejrzenie calej tablicy
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
 	//Rekord zawiera uchwyt
 	if(WinProcTable[Count].hwnd)
@@ -247,46 +226,121 @@ void SetAlpha()
 void SetAlphaEx(int Value)
 {
   //Przejrzenie calej tablicy
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
-	//Rekord zawiera uchwyt
-	if(WinProcTable[Count].hwnd)
+	//Rekord zawiera uchwyt i okno jest widoczne oraz nie jest to okno wtyczki AlphaWindow
+	if((WinProcTable[Count].hwnd)&&(IsWindowVisible(WinProcTable[Count].hwnd))&&(WinProcTable[Count].hwnd!=hSettingsForm->Handle))
 	{
-	  //Okno nie jest chmurka informacyjna
-	  if(WinProcTable[Count].hwnd!=hFrmMiniStatus)
+	  //Okno nie jest chmurka informacyjna lub oknem "Daj mi znac"
+	  if((WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
 	  {
-		/*if(WinProcTable[Count].hwnd!=hFrmYTMovie)
-		{
-		  long exStyle = GetWindowLong(WinProcTable[Count].hwnd, GWL_EXSTYLE);
-		  if(!(exStyle & WS_EX_LAYERED)) SetWindowLong(WinProcTable[Count].hwnd, GWL_EXSTYLE, exStyle|WS_EX_LAYERED);
-		  Vcl::Forms::SetLayeredWindowAttributes((int)WinProcTable[Count].hwnd, 0, Value, LWA_ALPHA);
-		}*/
 		//Ustawienie przezroczystosci
 		PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)WinProcTable[Count].hwnd,(LPARAM)Value);
-		//Wyslanie informacji o nadaniu przezroczystosci
-		TPluginHook PluginHook;
-		PluginHook.HookName = ALPHAWINDOWS_SETTRANSPARENCY;
-		PluginHook.wParam = (WPARAM)Value;
-		PluginHook.lParam = (LPARAM)WinProcTable[Count].hwnd;
-		PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
+		//Wylaczanie przezroczystosci dla danych okien
+		if((WinProcTable[Count].hwnd==hFrmPos)||(WinProcTable[Count].hwnd==hFrmYTMovie)||(WinProcTable[Count].hwnd==hFrmVOIP)||(WinProcTable[Count].hwnd==hFrmVideoPreview))
+		 Vcl::Forms::SetLayeredWindowAttributes((int)WinProcTable[Count].hwnd, 0, 255, LWA_ALPHA);
+		//Wysylanie informacji o zmianie przezroczystosci do okna z wtyczki
+		if(hAppHandle!=(HINSTANCE)GetWindowLong(WinProcTable[Count].hwnd,GWLP_HINSTANCE))
+		 SendMessage(WinProcTable[Count].hwnd,WM_ALPHAWINDOWS,0,(LPARAM)Value);
 	  }
 	}
   }
 }
 //---------------------------------------------------------------------------
 
-//Ustawianie przezroczystosci dla danego okna
+//Usuwanie przezroczystosci z danego okna
 void RemoveAlphaWnd(HWND hwnd)
 {
-  //if(hwnd!=hFrmYTMovie) Vcl::Forms::SetLayeredWindowAttributes((int)hwnd, 0, 255, LWA_ALPHA);
-  //Ustawienie przezroczystosci
-  PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)hwnd,255);
-  //Wyslanie informacji o nadaniu przezroczystosci
-  TPluginHook PluginHook;
-  PluginHook.HookName = ALPHAWINDOWS_SETTRANSPARENCY;
-  PluginHook.wParam = (WPARAM)255;
-  PluginHook.lParam = (LPARAM)hwnd;
-  PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
+  //Okno jest widoczne
+  if(IsWindowVisible(hwnd))
+  {
+	//Ustawienie przezroczystosci
+	PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)hwnd,255);
+	//Wysylanie informacji o zmianie przezroczystosci do okna z wtyczki
+	if(hAppHandle!=(HINSTANCE)GetWindowLong(hwnd,GWLP_HINSTANCE))
+	 SendMessage(hwnd,WM_ALPHAWINDOWS,0,(LPARAM)255);
+  }
+}
+//---------------------------------------------------------------------------
+
+//Szukanie uchwytu do okna kontaktow + uchwytu do aplikacji
+bool CALLBACK FindFrmMain(HWND hwnd, LPARAM lParam)
+{
+  //Pobranie PID okna
+  DWORD PID;
+  GetWindowThreadProcessId(hwnd, &PID);
+  //Okno pochodzace z komunikatora
+  if(PID==ProcessPID)
+  {
+	//Pobranie klasy okna
+	wchar_t WClassName[128];
+	GetClassNameW(hwnd, WClassName, sizeof(WClassName));
+	//Okno kontaktow
+	if((UnicodeString)WClassName=="TfrmMain")
+	{
+	  //Przypisanie uchwytu
+	  hFrmMain = hwnd;
+	  //Pobranie uchwytu do aplikacji
+	  hAppHandle = (HINSTANCE)GetWindowLong(hFrmMain,GWLP_HINSTANCE);
+	  //Zakonczenie enumeracji
+	  return false;
+	}
+  }
+  return true;
+}
+//---------------------------------------------------------------------------
+
+//Szukanie uchwytow do okien komunikatora
+bool CALLBACK EnumAppWindows(HWND hwnd, LPARAM lParam)
+{
+  //Pobranie PID okna
+  DWORD PID;
+  GetWindowThreadProcessId(hwnd, &PID);
+  //Okno pochodzace z komunikatora
+  if(PID==ProcessPID)
+  {
+	//Pobranie klasy okna
+	wchar_t WClassName[128];
+	GetClassNameW(hwnd, WClassName, sizeof(WClassName));
+	//Okno rozmowy
+	if((UnicodeString)WClassName=="TfrmSend") hFrmSend = hwnd;
+	//Okno chmurki informacyjnej
+	else if((UnicodeString)WClassName=="TfrmMiniStatus") hFrmMiniStatus = hwnd;
+	//Okno "Daj mi znac"
+	else if((UnicodeString)WClassName=="TfrmInfoAlert") hFrmInfoAlert = hwnd;
+	//Okno tworzenia wycinka
+	else if((UnicodeString)WClassName=="TfrmPos") hFrmPos = hwnd;
+	//Okno odtwarzacza YouTube
+	else if((UnicodeString)WClassName=="TfrmYTMovie") hFrmYTMovie = hwnd;
+	//Okno VOIP
+	else if((UnicodeString)WClassName=="TfrmVOIP") hFrmVOIP = hwnd;
+	//Okno pogladu kamerki
+	else if((UnicodeString)WClassName=="TfrmVideoPreview") hFrmVideoPreview = hwnd;
+	//Znaleziony uchwyt jest prawdziwym oknem
+	if((IsWindow(hwnd))&&(IsWindowVisible(hwnd))&&((UnicodeString)WClassName!="TForm")&&((UnicodeString)WClassName!="Internet Explorer_Hidden"))
+	{
+	  //Ustawienie przezroczystosci
+	  SetAlphaWnd(hwnd);
+	  //Pobierane wolnego rekordu
+	  int Idx = ReciveFreeIdx();
+	  //Znaleziono wolny rekord
+	  if(Idx!=-1)
+	  {
+		//Zapisanie uchwytu do okna
+		WinProcTable[Idx].hwnd = hwnd;
+		//Nie jest to okno wtyczki
+		if(hAppHandle==(HINSTANCE)GetWindowLong(hwnd,GWLP_HINSTANCE))
+		{
+		  //Zmiana procki okna + zapisanie starej procki
+		  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
+		  //Zapisanie aktualnej procki
+		  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
+		}
+	  }
+	}
+  }
+
+  return true;
 }
 //---------------------------------------------------------------------------
 
@@ -301,30 +355,76 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	  //Pobieranie aktywnego okna
 	  HWND hActiveFrm = GetForegroundWindow();
 	  //Aktywne okno zostalo zmienione
-	  if((hActiveFrm!=hLastActiveFrm)&&(hActiveFrm!=hFrmMiniStatus))
+	  if(hActiveFrm!=hLastActiveFrm)
 	  {
-		//Zabezpieczenie przed bialym tlem po zamknieciu okna
-		if((IsWindowVisible(hLastActiveFrm))||(!hLastActiveFrm))
+        //Zmienna trzymajaca PID procesu
+		DWORD PID;
+		//Pobranie PID procesu poprzedniego okna		
+		GetWindowThreadProcessId(hLastActiveFrm, &PID);
+		//Jezeli poprzednie okno bylo oknem z wtyczki
+		if((PID==ProcessPID)&&(hAppHandle!=(HINSTANCE)GetWindowLong(hLastActiveFrm,GWLP_HINSTANCE))&&(IsWindowVisible(hLastActiveFrm)))
+		 //Ustawienie przezroczystysci obramowania okna
+		 SendMessage(hLastActiveFrm,WM_ALPHAWINDOWS,0,(LPARAM)AlphaValue);
+		//Pobranie PID procesu aktywnego okna
+		GetWindowThreadProcessId(hActiveFrm, &PID);
+		//Okno pochodzi z komunikatora
+		if(PID==ProcessPID)
 		{
-		  //Pobranie PID aktywnego okna
-		  DWORD PID;
-		  GetWindowThreadProcessId(hActiveFrm, &PID);
-		  //Okno komunikatora ale nie okno wtyczki
-		  if(PID==ProcessPID)
+		  //Pobranie klasy okna
+		  wchar_t WClassName[128];
+		  GetClassNameW(hActiveFrm, WClassName, sizeof(WClassName));
+		  //Okno kontaktow
+		  if((UnicodeString)WClassName=="TfrmMain") hFrmMain = hActiveFrm;
+		  //Okno rozmowy
+		  else if((UnicodeString)WClassName=="TfrmSend") hFrmSend = hActiveFrm;
+		  //Okno chmurki informacyjnej
+		  else if((UnicodeString)WClassName=="TfrmMiniStatus") hFrmMiniStatus = hActiveFrm;
+		  //Okno "Daj mi znac"
+		  else if((UnicodeString)WClassName=="TfrmInfoAlert") hFrmInfoAlert = hActiveFrm;
+		  //Okno tworzenia wycinka
+		  else if((UnicodeString)WClassName=="TfrmPos") hFrmPos = hActiveFrm;
+		  //Okno odtwarzacza YouTube
+		  else if((UnicodeString)WClassName=="TfrmYTMovie") hFrmYTMovie = hActiveFrm;
+		  //Okno VOIP
+		  else if((UnicodeString)WClassName=="TfrmVOIP") hFrmVOIP = hActiveFrm;
+		  //Okno pogladu kamerki
+		  else if((UnicodeString)WClassName=="TfrmVideoPreview") hFrmVideoPreview = hActiveFrm;
+		  //Zabezpieczenie przed bialym tlem po zamknieciu okna
+		  if(((IsWindowVisible(hLastActiveFrm))||(!hLastActiveFrm))&&(hActiveFrm!=hFrmMiniStatus)&&(hActiveFrm!=hFrmInfoAlert))
 		  {
-			//Ustawianie przezroczystysci okna
+			//Ustawienie przezroczystysci okna
 			SetAlphaWnd(hActiveFrm);
-			//Jezeli procka dla okna nie istnieje i nie jest to okno wtyczki
-			if((!ReciveOldProc(hActiveFrm))&&(hAppHandle==(HINSTANCE)GetWindowLong(hActiveFrm,GWLP_HINSTANCE)))
+			//Nie jest to okno wtyczki
+			if(hAppHandle==(HINSTANCE)GetWindowLong(hActiveFrm,GWLP_HINSTANCE))
 			{
-			  //Pobierane wolnego rekordu
-			  int Idx = ReciveFreeIdx();
-			  //Zapisanie uchwytu do okna
-			  WinProcTable[Idx].hwnd = hActiveFrm;
-			  //Zmiana procki okna + zapisanie starej procki
-			  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hActiveFrm, GWLP_WNDPROC,(LONG)FrmProc);
-			  //Zapisanie aktualnej procki
-			  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hActiveFrm, GWLP_WNDPROC);
+			  //Nowa procka dla okna nie istnieje
+			  if(!ReciveOldProc(hActiveFrm))
+			  {
+				//Pobierane wolnego rekordu
+				int Idx = ReciveFreeIdx();
+				//Znaleziono wolny rekord
+				if(Idx!=-1)
+				{
+				  //Zapisanie uchwytu do okna
+				  WinProcTable[Idx].hwnd = hActiveFrm;
+				  //Zmiana procki okna + zapisanie starej procki
+				  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hActiveFrm, GWLP_WNDPROC,(LONG)FrmProc);
+				  //Zapisanie aktualnej procki
+				  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hActiveFrm, GWLP_WNDPROC);
+				}
+			  }
+			}
+			//Okno pochochodzi z wtyczki
+			else
+			{
+			  //Uchwyt do okna nie zostal jeszcze zapisany
+			  if(ReciveIdx(hActiveFrm)==-1)
+			  {
+				//Pobierane wolnego rekordu
+				int Idx = ReciveFreeIdx();
+				//Znaleziono wolny rekord - zapisanie uchwytu do okna
+				if(Idx!=-1) WinProcTable[Idx].hwnd = hActiveFrm;
+			  }
 			}
 		  }
 		}
@@ -340,13 +440,12 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 }
 //---------------------------------------------------------------------------
 
-
 LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(!ForceUnloadExecuted)
   {
-	//Ustawienie przezroczystosci dla chmurki informacyjnej
-	if(hwnd==hFrmMiniStatus)
+	//Ustawienie przezroczystosci dla chmurki informacyjnej i okna "Daj mi znac"
+	if((hwnd==hFrmMiniStatus)||(hwnd==hFrmInfoAlert))
 	{
 	  if(uMsg==WM_NCPAINT) SetAlphaWnd(hwnd);
 	}
@@ -386,15 +485,19 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	  }
 	  //Usuniecie przezroczystosci
 	  RemoveAlphaWnd(hwnd);
-	  //Pobranie indeksu rekordu
-	  int Idx = ReciveIdx(hwnd);
-	  //Zapisanie starej procki do zwrotu
-	  WNDPROC OldProc = WinProcTable[Idx].OldProc;
-	  //Usuniecie danych w rekordzie
-	  WinProcTable[Idx].hwnd = NULL;
-	  WinProcTable[Idx].OldProc = NULL;
-	  //Zwrot w funkcji
-	  return CallWindowProc(OldProc, hwnd, uMsg, wParam, lParam);
+	  //Wskazany uchwyt znajduje sie w tablicy
+	  if(ReciveIdx(hwnd)!=-1)
+	  {
+		//Pobranie indeksu rekordu
+		int Idx = ReciveIdx(hwnd);
+		//Zapisanie starej procki do zwrotu
+		WNDPROC OldProc = WinProcTable[Idx].OldProc;
+		//Usuniecie danych w rekordzie
+		WinProcTable[Idx].hwnd = NULL;
+		WinProcTable[Idx].OldProc = NULL;
+		//Zwrot w funkcji
+		return CallWindowProc(OldProc, hwnd, uMsg, wParam, lParam);
+	  }
 	}
   }
 
@@ -407,30 +510,6 @@ int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam)
 {
   //Info o rozpoczeciu procedury zamykania komunikatora
   ForceUnloadExecuted = true;
-
-  return 0;
-}
-//---------------------------------------------------------------------------
-
-//Hook na aktywna zakladke
-int __stdcall OnPrimaryTab(WPARAM wParam, LPARAM lParam)
-{
-  //Uchwyt do okna rozmowy nie zostal jeszcze pobrany
-  if(!hFrmSend)
-  {
-	//Przypisanie uchwytu okna rozmowy
-	hFrmSend = (HWND)(int)wParam;
-	//Pobierane wolnego rekordu
-	int Idx = ReciveFreeIdx();
-	//Zapisanie uchwytu do okna
-	WinProcTable[Idx].hwnd = hFrmSend;
-	//Zmiana procki okna + zapisanie starej procki
-	WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hFrmSend, GWLP_WNDPROC,(LONG)FrmProc);
-	//Zapisanie aktualnej procki
-	WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hFrmSend, GWLP_WNDPROC);
-	//Ustawienie przezroczystosci
-	SetAlphaWnd(hFrmSend);
-  }
 
   return 0;
 }
@@ -501,7 +580,7 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	//Otwarcie okna
 	if(Event==WINDOW_EVENT_CREATE)
 	{
-	  //Pobranie uchwytu do okna
+      //Pobranie uchwytu do okna
 	  HWND hwnd = (HWND)(int)WindowEvent->Handle;
 	  //Okno kontaktow
 	  if(ClassName=="TfrmMain")
@@ -515,21 +594,33 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	  else if(ClassName=="TfrmSend") hFrmSend = hwnd;
 	  //Okno chmurki informacyjnej
 	  else if(ClassName=="TfrmMiniStatus") hFrmMiniStatus = hwnd;
+	  //Okno "Daj mi znac"
+	  else if(ClassName=="TfrmInfoAlert") hFrmInfoAlert = hwnd;
+	  //Okno tworzenia wycinka
+	  else if(ClassName=="TfrmPos") hFrmPos = hwnd;
 	  //Okno odtwarzacza YouTube
 	  else if(ClassName=="TfrmYTMovie") hFrmYTMovie = hwnd;
+	  //Okno VOIP
+	  else if(ClassName=="TfrmVOIP") hFrmVOIP = hwnd;
+	  //Okno pogladu kamerki
+	  else if(ClassName=="TfrmVideoPreview") hFrmVideoPreview = hwnd;
 	  //Okno instalowania dodatkow
 	  else if(ClassName=="TfrmInstallAddon") FrmInstallAddonExist = true;
-	  //Jezeli procka dla okna nie istnieje
+	  //Nowa procka dla okna nie istnieje
 	  if(!ReciveOldProc(hwnd))
 	  {
 		//Pobierane wolnego rekordu
 		int Idx = ReciveFreeIdx();
-		//Zapisanie uchwytu do okna
-		WinProcTable[Idx].hwnd = hwnd;
-		//Zmiana procki okna + zapisanie starej procki
-		WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
-		//Zapisanie aktualnej procki
-		WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
+		//Znaleziono wolny rekord
+		if(Idx!=-1)
+		{
+		  //Zapisanie uchwytu do okna
+		  WinProcTable[Idx].hwnd = hwnd;
+		  //Zmiana procki okna + zapisanie starej procki
+		  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
+		  //Zapisanie aktualnej procki
+		  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
+		}
 	  }
 	}
 	//Zamkniecie okna
@@ -541,11 +632,19 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	  if(ClassName=="TfrmSend") hFrmSend = NULL;
 	  //Okno chmurki informacyjnej
 	  else if(ClassName=="TfrmMiniStatus") hFrmMiniStatus = NULL;
+	  //Okno "Daj mi znac"
+	  else if(ClassName=="TfrmInfoAlert") hFrmInfoAlert = NULL;
+	  //Okno tworzenia wycinka
+	  else if(ClassName=="TfrmPos") hFrmPos = NULL;
 	  //Okno odtwarzacza YouTube
 	  else if(ClassName=="TfrmYTMovie") hFrmYTMovie = NULL;
+	  //Okno VOIP
+	  else if(ClassName=="TfrmVOIP") hFrmVOIP = NULL;
+	  //Okno pogladu kamerki
+	  else if(ClassName=="TfrmVideoPreview") hFrmVideoPreview = NULL;
 	  //Okno instalowania dodatkow
 	  else if(ClassName=="TfrmInstallAddon") FrmInstallAddonExist = false;
-	  //Jezeli procka dla okna nadal istnieje
+	  //Nowa procka dla okna nadal istnieje
 	  if(ReciveOldProc(hwnd))
 	  {
 		//Przywrocenie starej procki
@@ -560,16 +659,20 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 		  PluginHook.wParam = (WPARAM)ReciveOldProc(hwnd);
 		  PluginHook.lParam = (LPARAM)hwnd;
 		  PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
-          //Wyrejestrowanie hooka
+		  //Wyrejestrowanie hooka
 		  SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC));
 		}
 		//Usuniecie przezroczystosci
 		RemoveAlphaWnd(hwnd);
-		//Pobranie indeksu rekordu
-		int Idx = ReciveIdx(hwnd);
-		//Usuniecie danych w rekordzie
-		WinProcTable[Idx].hwnd = NULL;
-		WinProcTable[Idx].OldProc = NULL;
+		//Wskazany uchwyt znajduje sie w tablicy
+		if(ReciveIdx(hwnd)!=-1)
+		{
+		  //Pobranie indeksu rekordu
+		  int Idx = ReciveIdx(hwnd);
+		  //Usuniecie danych w rekordzie
+		  WinProcTable[Idx].hwnd = NULL;
+		  WinProcTable[Idx].OldProc = NULL;
+		}
 	  }
 	}
   }
@@ -649,6 +752,33 @@ extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
   PluginLink = *Link;
   //Pobranie PID procesu AQQ
   ProcessPID = getpid();
+  //Wylaczanie przezroczystosci w rdzeniu AQQ
+  TStrings* IniList = new TStringList();
+  IniList->SetText((wchar_t*)PluginLink.CallService(AQQ_FUNCTION_FETCHSETUP,0,0));
+  TMemIniFile *Settings = new TMemIniFile(ChangeFileExt(Application->ExeName, ".INI"));
+  Settings->SetStrings(IniList);
+  delete IniList;
+  UnicodeString AlphaMsg = Settings->ReadString("View","AlphaMsg","0");
+  UnicodeString AlphaMain = Settings->ReadString("View","AlphaMain","0");
+  delete Settings;
+  if((StrToBool(AlphaMsg))||(StrToBool(AlphaMain)))
+  {
+    //Nowe ustawienia
+	TSaveSetup SaveSetup;
+	SaveSetup.Section = L"View";
+	SaveSetup.Ident = L"AlphaMsg";
+	SaveSetup.Value = L"0";
+	//Zapis ustawien
+	PluginLink.CallService(AQQ_FUNCTION_SAVESETUP,1,(LPARAM)(&SaveSetup));
+	//Nowe ustawienia
+	SaveSetup.Section = L"View";
+	SaveSetup.Ident = L"AlphaMain";
+	SaveSetup.Value = L"0";
+	//Zapis ustawien
+	PluginLink.CallService(AQQ_FUNCTION_SAVESETUP,1,(LPARAM)(&SaveSetup));
+	//Odswiezenie ustawien
+	PluginLink.CallService(AQQ_FUNCTION_REFRESHSETUP,0,0);
+  }
   //Pobranie sciezki do prywatnego folderu wtyczek
   UnicodeString PluginUserDir = GetPluginUserDir();
   //Folder z ustawieniami wtyczki
@@ -675,24 +805,10 @@ extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
   //Wszystkie moduly zostaly zaladowane
   if(PluginLink.CallService(AQQ_SYSTEM_MODULESLOADED,0,0))
   {
-	//Szukanie uchwytu do okna kontaktowa
+	//Szukanie uchwytu do okna kontaktow + uchwytu do aplikacji
 	EnumWindows((WNDENUMPROC)FindFrmMain,0);
-	//Pobierane wolnego rekordu
-	int Idx = ReciveFreeIdx();
-	//Zapisanie uchwytu do okna
-	WinProcTable[Idx].hwnd = hFrmMain;
-	//Zmiana procki okna + zapisanie starej procki
-	WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hFrmMain, GWLP_WNDPROC,(LONG)FrmProc);
-	//Zapisanie aktualnej procki
-	WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hFrmMain, GWLP_WNDPROC);
-	//Ustawienie przezroczystosci
-	SetAlphaWnd(hFrmMain);
-	//Hook na aktywna zakladke
-	PluginLink.HookEvent(AQQ_CONTACTS_BUDDY_PRIMARYTAB,OnPrimaryTab);
-	//Pobieranie aktywnych zakladek
-	PluginLink.CallService(AQQ_CONTACTS_BUDDY_FETCHALLTABS,0,0);
-	//Usuniecie hooka na aktywna zakladke
-	PluginLink.UnhookEvent(OnPrimaryTab);
+	//Szukanie uchwytow do okien komunikatora
+	EnumWindows((WNDENUMPROC)EnumAppWindows,0);
   }
   //Rejestowanie klasy okna timera
   WNDCLASSEX wincl;
@@ -713,7 +829,7 @@ extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
   hTimerFrm = CreateWindowEx(0, L"TAlphaWindowsTimer", L"",	0, 0, 0, 0, 0, NULL, NULL, HInstance, NULL);
   //Timer na sprawdzanie aktywnego okna
   SetTimer(hTimerFrm,TIMER_CHKACTIVEWINDOW,25,(TIMERPROC)TimerFrmProc);
-
+  
   return 0;
 }
 //---------------------------------------------------------------------------
@@ -733,25 +849,29 @@ extern "C" int __declspec(dllexport) __stdcall Unload()
   PluginLink.UnhookEvent(OnThemeChanged);
   PluginLink.UnhookEvent(OnWindowEvent);
   //Usuwanie przezroczystosci i zdjemowanie hookow
-  for(int Count=0;Count<30;Count++)
+  for(int Count=0;Count<60;Count++)
   {
-	//Rekord zawiera uchwyt i stara procke
-	if((WinProcTable[Count].hwnd)&&(WinProcTable[Count].OldProc))
+	//Rekord zawiera uchwyt do okna
+	if(WinProcTable[Count].hwnd)
 	{
-	  //Przywrocenie starej procki
-	  if(WinProcTable[Count].CurrentProc==(WNDPROC)GetWindowLongPtr(WinProcTable[Count].hwnd, GWLP_WNDPROC))
-	   SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(WinProcTable[Count].hwnd));
-	  //Samo wyrejestrowanie hooka
-	  else
+	  //Rekord zawiera stara procke okna
+	  if(WinProcTable[Count].OldProc)
 	  {
-		//Przekazanie starej procki przez API
-		TPluginHook PluginHook;
-		PluginHook.HookName = ALPHAWINDOWS_OLDPROC;
-		PluginHook.wParam = (WPARAM)WinProcTable[Count].OldProc;
-		PluginHook.lParam = (LPARAM)WinProcTable[Count].hwnd;
-		PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
-		//Wyrejestrowanie hooka
-		SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)(WNDPROC)GetWindowLongPtr(WinProcTable[Count].hwnd, GWLP_WNDPROC));
+		//Przywrocenie starej procki
+		if(WinProcTable[Count].CurrentProc==(WNDPROC)GetWindowLongPtr(WinProcTable[Count].hwnd, GWLP_WNDPROC))
+		 SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(WinProcTable[Count].hwnd));
+		//Samo wyrejestrowanie hooka
+		else
+		{
+		  //Przekazanie starej procki przez API
+		  TPluginHook PluginHook;
+		  PluginHook.HookName = ALPHAWINDOWS_OLDPROC;
+		  PluginHook.wParam = (WPARAM)WinProcTable[Count].OldProc;
+		  PluginHook.lParam = (LPARAM)WinProcTable[Count].hwnd;
+		  PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
+		  //Wyrejestrowanie hooka
+		  SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)(WNDPROC)GetWindowLongPtr(WinProcTable[Count].hwnd, GWLP_WNDPROC));
+		}
 	  }
 	  //Usuwanie przezroczystosci
 	  if((!ForceUnloadExecuted)&&(!FrmInstallAddonExist)) RemoveAlphaWnd(WinProcTable[Count].hwnd);
@@ -783,7 +903,7 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,0,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,1,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";
