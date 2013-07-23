@@ -64,6 +64,8 @@ bool FrmInstallAddonExist = false;
 bool ForceUnloadExecuted = false;
 //TIMERY---------------------------------------------------------------------
 #define TIMER_CHKACTIVEWINDOW 10
+#define TIMER_FRMMAIN_SETALPHA 20
+#define TIMER_FRMSEND_SETALPHA 30
 //FORWARD-TIMER--------------------------------------------------------------
 LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-WINDOW-PROC--------------------------------------------------------
@@ -357,9 +359,9 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	  //Aktywne okno zostalo zmienione
 	  if(hActiveFrm!=hLastActiveFrm)
 	  {
-        //Zmienna trzymajaca PID procesu
+		//Zmienna trzymajaca PID procesu
 		DWORD PID;
-		//Pobranie PID procesu poprzedniego okna		
+		//Pobranie PID procesu poprzedniego okna
 		GetWindowThreadProcessId(hLastActiveFrm, &PID);
 		//Jezeli poprzednie okno bylo oknem z wtyczki
 		if((PID==ProcessPID)&&(hAppHandle!=(HINSTANCE)GetWindowLong(hLastActiveFrm,GWLP_HINSTANCE))&&(IsWindowVisible(hLastActiveFrm)))
@@ -390,7 +392,7 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		  //Okno pogladu kamerki
 		  else if((UnicodeString)WClassName=="TfrmVideoPreview") hFrmVideoPreview = hActiveFrm;
 		  //Zabezpieczenie przed bialym tlem po zamknieciu okna
-		  if(((IsWindowVisible(hLastActiveFrm))||(!hLastActiveFrm))&&(hActiveFrm!=hFrmMiniStatus)&&(hActiveFrm!=hFrmInfoAlert))
+		  if(((IsWindowVisible(hLastActiveFrm))||(!hLastActiveFrm))&&(hActiveFrm!=hFrmMiniStatus)&&(hActiveFrm!=hFrmInfoAlert)&&(hActiveFrm!=hFrmMain))
 		  {
 			//Ustawienie przezroczystysci okna
 			SetAlphaWnd(hActiveFrm);
@@ -432,7 +434,15 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		hLastActiveFrm = hActiveFrm;
 	  }
 	}
-
+	//Ustawienie przezroczystosci okna kontaktow
+	if(wParam==TIMER_FRMMAIN_SETALPHA)
+	{
+	  //Zatrzymanie timera
+	  KillTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA);
+	  //Ustawienie przezroczystosci
+	  SetAlphaWnd(hFrmMain);
+	}
+	
 	return 0;
   }
 
@@ -452,18 +462,22 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	//Ustawienie przezroczystosci dla pozostalych okien
 	else
 	{
-	  if((uMsg==WM_ACTIVATE)&&((wParam==WA_ACTIVE)||(wParam==WA_CLICKACTIVE))) SetAlphaWnd(hwnd);
+	  if((uMsg==WM_ACTIVATE)&&((wParam==WA_ACTIVE)||(wParam==WA_CLICKACTIVE)))
+	  {
+		SetAlphaWnd(hwnd);
+		if(hwnd==hFrmMain) SetTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA,25,(TIMERPROC)TimerFrmProc);
+	  }
 	  if((uMsg==WM_ACTIVATE)&&(wParam==WA_INACTIVE)) SetAlphaWnd(hwnd);
 	  if(uMsg==WM_ACTIVATEAPP) SetAlphaWnd(hwnd);
-	  if(uMsg==WM_SETFOCUS) SetAlphaWnd(hwnd);
-	  if((uMsg==WM_SETICON)&&(hwnd==hFrmSend)) SetAlphaWnd(hwnd);
-	  //if((uMsg==WM_ERASEBKGND)&&(hwnd==hFrmSend)) SetAlphaWnd(hwnd);
+	  if(uMsg==WM_SETFOCUS) SetAlphaWnd(hwnd);	  
+	  if((uMsg==WM_PAINT))
+	  {
+		SetAlphaWnd(hwnd);
+		if(hwnd==hFrmMain) SetTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA,25,(TIMERPROC)TimerFrmProc);
+	  }
+	  if((uMsg==WM_NCPAINT)) SetAlphaWnd(hwnd);
 	  if((uMsg==WM_ERASEBKGND)&&(GetForegroundWindow()==hwnd)&&(hwnd!=hLastActiveFrm)) SetAlphaWnd(hwnd);
-	  if(uMsg==WM_PAINT) SetAlphaWnd(hwnd);
-	  if(uMsg==WM_NCPAINT) SetAlphaWnd(hwnd);
-	  //if(uMsg==WM_NOTIFY) SetAlphaWnd(hwnd);
-	  //if(uMsg==WM_SETTEXT) SetAlphaWnd(hwnd);
-	  //if(uMsg==WM_SETICON) SetAlphaWnd(hwnd);
+	  if((uMsg==WM_SETICON)&&(hwnd==hFrmSend)) SetAlphaWnd(hwnd);
 	}
 	//Usuniecie przezroczystosci
 	if(uMsg==WM_CLOSE)
@@ -903,7 +917,7 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,1,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,2,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";
