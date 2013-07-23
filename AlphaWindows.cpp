@@ -73,6 +73,7 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-AQQ-HOOKS----------------------------------------------------------
 int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
 int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam);
+int __stdcall OnTabChanged(WPARAM wParam, LPARAM lPaam);
 int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
 int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam);
 //FORWARD-OTHER-FUNCTION-----------------------------------------------------
@@ -546,7 +547,17 @@ int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
 }
 //---------------------------------------------------------------------------
 
-//Hook na zmianê kompozycji
+//Hook na zmiane zakladki w oknie kontaktow
+int __stdcall OnTabChanged(WPARAM wParam, LPARAM lParam)
+{
+  //Ustawienie przezroczystosci okna kontatkow
+  SetAlphaWnd(hFrmMain);
+
+  return 0;
+}
+//---------------------------------------------------------------------------
+
+//Hook na zmiane kompozycji
 int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lParam)
 {
   //Okno ustawien zostalo juz stworzone
@@ -812,6 +823,8 @@ extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
   PluginLink.HookEvent(AQQ_SYSTEM_BEFOREUNLOAD,OnBeforeUnload);
   //Hook na odbieranie starej procki przekazanej przez wtyczke TabKit
   PluginLink.HookEvent(TABKIT_OLDPROC,OnRecvOldProc);
+  //Hook na zmiane zakladki w oknie kontaktow
+  PluginLink.HookEvent(AQQ_SYSTEM_TABCHANGE, OnTabChanged);
   //Hook na zmiane kompozycji
   PluginLink.HookEvent(AQQ_SYSTEM_THEMECHANGED, OnThemeChanged);
   //Hook na zamkniecie/otwarcie okien
@@ -860,6 +873,7 @@ extern "C" int __declspec(dllexport) __stdcall Unload()
   //Wyladowanie wszystkich hookow
   PluginLink.UnhookEvent(OnBeforeUnload);
   PluginLink.UnhookEvent(OnRecvOldProc);
+  PluginLink.UnhookEvent(OnTabChanged);
   PluginLink.UnhookEvent(OnThemeChanged);
   PluginLink.UnhookEvent(OnWindowEvent);
   //Usuwanie przezroczystosci i zdjemowanie hookow
