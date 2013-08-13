@@ -41,6 +41,8 @@ __declspec(dllimport)UnicodeString GetThemeSkinDir();
 __declspec(dllimport)bool ChkSkinEnabled();
 __declspec(dllimport)bool ChkThemeAnimateWindows();
 __declspec(dllimport)bool ChkThemeGlowing();
+__declspec(dllimport)int GetHUE();
+__declspec(dllimport)int GetSaturation();
 __declspec(dllimport)void LoadSettings();
 __declspec(dllimport)void SetAlpha();
 __declspec(dllimport)void SetAlphaEx(int Value);
@@ -55,7 +57,7 @@ __fastcall TSettingsForm::TSettingsForm(TComponent* Owner)
 void __fastcall TSettingsForm::WMTransparency(TMessage &Message)
 {
   Application->ProcessMessages();
-  sSkinProvider->BorderForm->UpdateExBordersPos(true,(int)Message.LParam);
+  if(sSkinManager->Active) sSkinProvider->BorderForm->UpdateExBordersPos(true,(int)Message.LParam);
 }
 //---------------------------------------------------------------------------
 
@@ -68,12 +70,18 @@ void __fastcall TSettingsForm::FormCreate(TObject *Sender)
 	//Plik zaawansowanej stylizacji okien istnieje
 	if(FileExists(ThemeSkinDir + "\\\\Skin.asz"))
 	{
+	  //Dane pliku zaawansowanej stylizacji okien
 	  ThemeSkinDir = StringReplace(ThemeSkinDir, "\\\\", "\\", TReplaceFlags() << rfReplaceAll);
 	  sSkinManager->SkinDirectory = ThemeSkinDir;
 	  sSkinManager->SkinName = "Skin.asz";
+	  //Ustawianie animacji AlphaControls
 	  if(ChkThemeAnimateWindows()) sSkinManager->AnimEffects->FormShow->Time = 200;
 	  else sSkinManager->AnimEffects->FormShow->Time = 0;
 	  sSkinManager->Effects->AllowGlowing = ChkThemeGlowing();
+	  //Zmiana kolorystyki AlphaControls
+	  sSkinManager->HueOffset = GetHUE();
+	  sSkinManager->Saturation = GetSaturation();
+	  //Aktywacja skorkowania AlphaControls
 	  sSkinManager->Active = true;
 	}
 	//Brak pliku zaawansowanej stylizacji okien
