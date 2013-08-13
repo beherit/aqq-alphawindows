@@ -93,6 +93,7 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-AQQ-HOOKS----------------------------------------------------------
 int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
+int __stdcall OnColorChange(WPARAM wParam, LPARAM lParam);
 int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam);
 int __stdcall OnTabChanged(WPARAM wParam, LPARAM lPaam);
 int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
@@ -164,6 +165,18 @@ bool ChkThemeGlowing()
   UnicodeString GlowingEnabled = Settings->ReadString("Theme","ThemeGlowing","1");
   delete Settings;
   return StrToBool(GlowingEnabled);
+}
+//---------------------------------------------------------------------------
+
+//Pobieranie ustawien koloru AlphaControls
+int GetHUE()
+{
+  return (int)PluginLink.CallService(AQQ_SYSTEM_COLORGETHUE,0,0);
+}
+//---------------------------------------------------------------------------
+int GetSaturation()
+{
+  return (int)PluginLink.CallService(AQQ_SYSTEM_COLORGETSATURATION,0,0);
 }
 //---------------------------------------------------------------------------
 
@@ -551,6 +564,24 @@ int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam)
 }
 //---------------------------------------------------------------------------
 
+//Hook na zmiane kolorystyki AlphaControls
+int __stdcall OnColorChange(WPARAM wParam, LPARAM lParam)
+{
+  //Okno ustawien zostalo juz stworzone
+  if(hSettingsForm)
+  {
+	//Wlaczona zaawansowana stylizacja okien
+	if(ChkSkinEnabled())
+	{
+	  hSettingsForm->sSkinManager->HueOffset = wParam;
+	  hSettingsForm->sSkinManager->Saturation = lParam;
+	}
+  }
+
+  return 0;
+}
+//---------------------------------------------------------------------------
+
 //Hook na odbieranie starej procki przekazanej przez wtyczke TabKit
 int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
 {
@@ -591,12 +622,18 @@ int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lParam)
 	  //Plik zaawansowanej stylizacji okien istnieje
 	  if(FileExists(ThemeSkinDir + "\\\\Skin.asz"))
 	  {
+		//Dane pliku zaawansowanej stylizacji okien
 		ThemeSkinDir = StringReplace(ThemeSkinDir, "\\\\", "\\", TReplaceFlags() << rfReplaceAll);
 		hSettingsForm->sSkinManager->SkinDirectory = ThemeSkinDir;
 		hSettingsForm->sSkinManager->SkinName = "Skin.asz";
+		//Ustawianie animacji AlphaControls
 		if(ChkThemeAnimateWindows()) hSettingsForm->sSkinManager->AnimEffects->FormShow->Time = 200;
 		else hSettingsForm->sSkinManager->AnimEffects->FormShow->Time = 0;
 		hSettingsForm->sSkinManager->Effects->AllowGlowing = ChkThemeGlowing();
+		//Zmiana kolorystyki AlphaControls
+		hSettingsForm->sSkinManager->HueOffset = GetHUE();
+	    hSettingsForm->sSkinManager->Saturation = GetSaturation();
+		//Aktywacja skorkowania AlphaControls
 		hSettingsForm->sSkinManager->Active = true;
 	  }
 	  //Brak pliku zaawansowanej stylizacji okien
@@ -842,6 +879,8 @@ extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
    ExtractRes((PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png").w_str(),L"PLUGIN_RES",L"DATA");
   //Hook na wylaczenie komunikatora poprzez usera
   PluginLink.HookEvent(AQQ_SYSTEM_BEFOREUNLOAD,OnBeforeUnload);
+  //Hook na zmiane kolorystyki AlphaControls
+  PluginLink.HookEvent(AQQ_SYSTEM_COLORCHANGE,OnColorChange);
   //Hook na odbieranie starej procki przekazanej przez wtyczke TabKit
   PluginLink.HookEvent(TABKIT_OLDPROC,OnRecvOldProc);
   //Hook na zmiane zakladki w oknie kontaktow
@@ -893,6 +932,7 @@ extern "C" int __declspec(dllexport) __stdcall Unload()
   UnregisterClass(L"TAlphaWindowsTimer",HInstance);
   //Wyladowanie wszystkich hookow
   PluginLink.UnhookEvent(OnBeforeUnload);
+  PluginLink.UnhookEvent(OnColorChange);
   PluginLink.UnhookEvent(OnRecvOldProc);
   PluginLink.UnhookEvent(OnTabChanged);
   PluginLink.UnhookEvent(OnThemeChanged);
