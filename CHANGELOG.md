@@ -1,3 +1,10 @@
+1.0.3.0
+-----
+* Obsługa kolorystyki stylizacji okien (barwa i nasycenie).
+* Drobne poprawki w ustawianiu przezroczystość obramowań okna kontaktów.
+* Inne mniej ważne zmiany w kodzie.
+* Aktualizacja komponentów AlphaControls do nowszej wersji (8.44).
+
 1.0.2.0
 -----
 * Zmiany w obsłudze okna kontaktów.
