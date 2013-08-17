@@ -1,3 +1,7 @@
+1.0.4.0
+* Poprawki w nadawaniu przeźroczystości przy zmianie zakładek w oknie kontaktów oraz przy notyfikacji WM_ACTIVATEAPP. 
+* Drobne zmiany optymalizacyjne w kodzie.
+
 1.0.3.0
 -----
 * Obsługa kolorystyki stylizacji okien (barwa i nasycenie).
