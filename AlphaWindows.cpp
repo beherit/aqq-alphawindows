@@ -43,7 +43,6 @@ TSettingsForm *hSettingsForm;
 //Struktury-glowne-----------------------------------------------------------
 TPluginLink PluginLink;
 TPluginInfo PluginInfo;
-PPluginWindowEvent WindowEvent;
 //---------------------------------------------------------------------------
 //Tablica z uchwytem i stara procka okna
 struct TWinProcTable
@@ -86,7 +85,7 @@ bool ForceUnloadExecuted = false;
 //TIMERY---------------------------------------------------------------------
 #define TIMER_CHKACTIVEWINDOW 10
 #define TIMER_FRMMAIN_SETALPHA 20
-#define TIMER_FRMSEND_SETALPHA 30
+#define TIMER_SETALPHA 30
 //FORWARD-TIMER--------------------------------------------------------------
 LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-WINDOW-PROC--------------------------------------------------------
@@ -254,6 +253,17 @@ void SetAlpha()
   {
 	//Rekord zawiera uchwyt
 	if(WinProcTable[Count].hwnd)
+	 SetAlphaWnd(WinProcTable[Count].hwnd);
+  }
+}
+//---------------------------------------------------------------------------
+void SetAlphaW()
+{
+  //Przejrzenie calej tablicy
+  for(int Count=0;Count<60;Count++)
+  {
+	//Rekord zawiera uchwyt
+	if((WinProcTable[Count].hwnd)&&(WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
 	 SetAlphaWnd(WinProcTable[Count].hwnd);
   }
 }
@@ -477,6 +487,14 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	  //Ustawienie przezroczystosci
 	  SetAlphaWnd(hFrmMain);
 	}
+	//Ustawienie przezroczystosci dla wszystkich okien
+	if(wParam==TIMER_SETALPHA)
+	{
+      //Zatrzymanie timera
+	  KillTimer(hTimerFrm,TIMER_SETALPHA);
+	  //Ustawienie przezroczystosci
+	  SetAlphaW();
+    }
 	
 	return 0;
   }
@@ -503,14 +521,14 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if(hwnd==hFrmMain) SetTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA,25,(TIMERPROC)TimerFrmProc);
 	  }
 	  if((uMsg==WM_ACTIVATE)&&(wParam==WA_INACTIVE)) SetAlphaWnd(hwnd);
-	  if(uMsg==WM_ACTIVATEAPP) SetAlphaWnd(hwnd);
-	  if(uMsg==WM_SETFOCUS) SetAlphaWnd(hwnd);	  
-	  if((uMsg==WM_PAINT))
+	  if(uMsg==WM_ACTIVATEAPP) SetTimer(hTimerFrm,TIMER_SETALPHA,25,(TIMERPROC)TimerFrmProc);
+	  if(uMsg==WM_SETFOCUS) SetAlphaWnd(hwnd);
+	  if(uMsg==WM_PAINT)
 	  {
 		SetAlphaWnd(hwnd);
 		if(hwnd==hFrmMain) SetTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA,25,(TIMERPROC)TimerFrmProc);
 	  }
-	  if((uMsg==WM_NCPAINT)) SetAlphaWnd(hwnd);
+	  if(uMsg==WM_NCPAINT) SetAlphaWnd(hwnd);
 	  if((uMsg==WM_ERASEBKGND)&&(GetForegroundWindow()==hwnd)&&(hwnd!=hLastActiveFrm)) SetAlphaWnd(hwnd);
 	  if((uMsg==WM_SETICON)&&(hwnd==hFrmSend)) SetAlphaWnd(hwnd);
 	}
@@ -602,8 +620,8 @@ int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
 //Hook na zmiane zakladki w oknie kontaktow
 int __stdcall OnTabChanged(WPARAM wParam, LPARAM lParam)
 {
-  //Ustawienie przezroczystosci okna kontatkow
-  SetAlphaWnd(hFrmMain);
+  //Ustawienie przezroczystosci wszystkich okien
+  SetTimer(hTimerFrm,TIMER_SETALPHA,25,(TIMERPROC)TimerFrmProc);
 
   return 0;
 }
@@ -657,14 +675,14 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
   if(!ForceUnloadExecuted)
   {
 	//Pobranie informacji o oknie i eventcie
-	WindowEvent = (PPluginWindowEvent)lParam;
-	int Event = WindowEvent->WindowEvent;
-	UnicodeString ClassName = (wchar_t*)WindowEvent->ClassName;
+	TPluginWindowEvent WindowEvent = *(PPluginWindowEvent)lParam;
+	int Event = WindowEvent.WindowEvent;
+	UnicodeString ClassName = (wchar_t*)WindowEvent.ClassName;
 	//Otwarcie okna
 	if(Event==WINDOW_EVENT_CREATE)
 	{
       //Pobranie uchwytu do okna
-	  HWND hwnd = (HWND)(int)WindowEvent->Handle;
+	  HWND hwnd = (HWND)(int)WindowEvent.Handle;
 	  //Okno kontaktow
 	  if(ClassName=="TfrmMain")
 	  {
@@ -710,7 +728,7 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	if(Event==WINDOW_EVENT_CLOSE)
 	{
 	  //Pobranie uchwytu do okna
-	  HWND hwnd = (HWND)(int)WindowEvent->Handle;
+	  HWND hwnd = (HWND)(int)WindowEvent.Handle;
 	  //Okno rozmowy
 	  if(ClassName=="TfrmSend") hFrmSend = NULL;
 	  //Okno chmurki informacyjnej
@@ -992,12 +1010,14 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,3,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,4,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";
   PluginInfo.Copyright = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.Homepage = L"http://beherit.pl";
+  PluginInfo.Flag = 0;
+  PluginInfo.ReplaceDefaultModule = 0;
 
   return &PluginInfo;
 }
