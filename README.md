@@ -12,7 +12,7 @@ Autorem wtyczki AlphaWindows jest Krzysztof Grochocki. Możesz skontaktować si�
 
 Licencja
 -------
-Wtyczka AlphaWindows wykorzystuje licencję [GNU General Public License 3](http://www.gnu.org/copyleft/gpl.html).
+Wtyczka AlphaWindows objęta jest licencją [GNU General Public License 3](http://www.gnu.org/copyleft/gpl.html).
 
     AlphaWindows
     Copyright (C) 2013  Krzysztof Grochocki

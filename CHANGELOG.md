@@ -1,4 +1,10 @@
+1.0.5.0
+-----
+* Poprawki w nadawaniu przeźroczystości przy notyfikacji WM_ACTIVATE oraz WM_PAINT.
+* Nieustawianie przeźroczystości dla pełnoekranowego odtwarzacza YouTube.
+
 1.0.4.0
+-----
 * Poprawki w nadawaniu przeźroczystości przy zmianie zakładek w oknie kontaktów oraz przy notyfikacji WM_ACTIVATEAPP. 
 * Drobne zmiany optymalizacyjne w kodzie.
 

@@ -235,8 +235,11 @@ void SetAlphaWnd(HWND hwnd)
   {
 	//Ustawienie przezroczystosci
 	PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)hwnd,(LPARAM)AlphaValue);
+	//Pobieranie klasy okna
+	wchar_t* ClassName = new wchar_t[128];
+	GetClassNameW(hwnd, ClassName, 128);
 	//Wylaczanie przezroczystosci dla danych okien
-	if((hwnd==hFrmPos)||(hwnd==hFrmYTMovie)||(hwnd==hFrmVOIP)||(hwnd==hFrmVideoPreview))
+	if((hwnd==hFrmPos)||(hwnd==hFrmYTMovie)||(hwnd==hFrmVOIP)||(hwnd==hFrmVideoPreview)||((UnicodeString)ClassName=="ShockwaveFlashFullScreen"))
 	 Vcl::Forms::SetLayeredWindowAttributes((int)hwnd, 0, 255, LWA_ALPHA);
 	//Wysylanie informacji o zmianie przezroczystosci do okna z wtyczki
 	if(hAppHandle!=(HINSTANCE)GetWindowLong(hwnd,GWLP_HINSTANCE))
@@ -283,8 +286,11 @@ void SetAlphaEx(int Value)
 	  {
 		//Ustawienie przezroczystosci
 		PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)WinProcTable[Count].hwnd,(LPARAM)Value);
+		//Pobieranie klasy okna
+		wchar_t* ClassName = new wchar_t[128];
+		GetClassNameW(WinProcTable[Count].hwnd, ClassName, 128);
 		//Wylaczanie przezroczystosci dla danych okien
-		if((WinProcTable[Count].hwnd==hFrmPos)||(WinProcTable[Count].hwnd==hFrmYTMovie)||(WinProcTable[Count].hwnd==hFrmVOIP)||(WinProcTable[Count].hwnd==hFrmVideoPreview))
+		if((WinProcTable[Count].hwnd==hFrmPos)||(WinProcTable[Count].hwnd==hFrmYTMovie)||(WinProcTable[Count].hwnd==hFrmVOIP)||(WinProcTable[Count].hwnd==hFrmVideoPreview)||((UnicodeString)ClassName=="ShockwaveFlashFullScreen"))
 		 Vcl::Forms::SetLayeredWindowAttributes((int)WinProcTable[Count].hwnd, 0, 255, LWA_ALPHA);
 		//Wysylanie informacji o zmianie przezroczystosci do okna z wtyczki
 		if(hAppHandle!=(HINSTANCE)GetWindowLong(WinProcTable[Count].hwnd,GWLP_HINSTANCE))
@@ -517,16 +523,16 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	  if((uMsg==WM_ACTIVATE)&&((wParam==WA_ACTIVE)||(wParam==WA_CLICKACTIVE)))
 	  {
-		SetAlphaWnd(hwnd);
 		if(hwnd==hFrmMain) SetTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA,25,(TIMERPROC)TimerFrmProc);
+		else SetAlphaWnd(hwnd);
 	  }
 	  if((uMsg==WM_ACTIVATE)&&(wParam==WA_INACTIVE)) SetAlphaWnd(hwnd);
 	  if(uMsg==WM_ACTIVATEAPP) SetTimer(hTimerFrm,TIMER_SETALPHA,25,(TIMERPROC)TimerFrmProc);
 	  if(uMsg==WM_SETFOCUS) SetAlphaWnd(hwnd);
 	  if(uMsg==WM_PAINT)
 	  {
-		SetAlphaWnd(hwnd);
 		if(hwnd==hFrmMain) SetTimer(hTimerFrm,TIMER_FRMMAIN_SETALPHA,25,(TIMERPROC)TimerFrmProc);
+		else SetAlphaWnd(hwnd);
 	  }
 	  if(uMsg==WM_NCPAINT) SetAlphaWnd(hwnd);
 	  if((uMsg==WM_ERASEBKGND)&&(GetForegroundWindow()==hwnd)&&(hwnd!=hLastActiveFrm)) SetAlphaWnd(hwnd);
@@ -1010,7 +1016,7 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,4,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,5,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";
