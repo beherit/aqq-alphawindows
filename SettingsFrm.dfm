@@ -4,7 +4,7 @@ object SettingsForm: TSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'AlphaWindows - ustawienia'
-  ClientHeight = 144
+  ClientHeight = 172
   ClientWidth = 333
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -151,11 +151,14 @@ object SettingsForm: TSettingsForm
   Position = poScreenCenter
   OnCreate = FormCreate
   OnShow = FormShow
+  DesignSize = (
+    333
+    172)
   PixelsPerInch = 96
   TextHeight = 13
   object Bevel: TsBevel
     Left = 0
-    Top = 106
+    Top = 134
     Width = 333
     Height = 38
     Align = alBottom
@@ -165,27 +168,30 @@ object SettingsForm: TSettingsForm
   end
   object OKButton: TButton
     Left = 90
-    Top = 114
+    Top = 142
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Caption = 'OK'
     TabOrder = 0
     OnClick = OKButtonClick
   end
   object CancelButton: TButton
     Left = 171
-    Top = 114
+    Top = 142
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Caption = 'Anuluj'
     TabOrder = 1
     OnClick = aExitExecute
   end
   object SaveButton: TButton
     Left = 252
-    Top = 114
+    Top = 142
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Caption = 'Zastosuj'
     Enabled = False
     TabOrder = 2
@@ -196,7 +202,7 @@ object SettingsForm: TSettingsForm
     Left = 6
     Top = 6
     Width = 321
-    Height = 94
+    Height = 122
     Margins.Left = 6
     Margins.Top = 6
     Margins.Right = 6
@@ -252,6 +258,18 @@ object SettingsForm: TSettingsForm
       BarOffsetV = 0
       BarOffsetH = 0
     end
+    object IgnoreThemeCheckBox: TsCheckBox
+      Left = 16
+      Top = 90
+      Width = 250
+      Height = 20
+      Caption = 'Ignoruj warto'#347#263' zdefiniowan'#261' przez kompozycj'#281
+      TabOrder = 1
+      OnClick = IgnoreThemeCheckBoxClick
+      SkinData.SkinSection = 'CHECKBOX'
+      ImgChecked = 0
+      ImgUnchecked = 0
+    end
   end
   object sSkinManager: TsSkinManager
     ExtendedBorders = True
@@ -285,11 +303,10 @@ object SettingsForm: TSettingsForm
     ThirdParty.ThirdScrollControl = ' '
     ThirdParty.ThirdUpDown = ' '
     ThirdParty.ThirdScrollBar = ' '
+    ThirdParty.ThirdStaticText = ' '
     Left = 32
-    Top = 110
   end
   object ActionList: TActionList
-    Top = 110
     object aExit: TAction
       Caption = 'aExit'
       ShortCut = 27
@@ -313,6 +330,5 @@ object SettingsForm: TSettingsForm
     SkinData.SkinSection = 'FORM'
     TitleButtons = <>
     Left = 64
-    Top = 112
   end
 end
