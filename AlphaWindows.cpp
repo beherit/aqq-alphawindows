@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-// Copyright (C) 2013 Krzysztof Grochocki
+// Copyright (C) 2013-2014 Krzysztof Grochocki
 //
 // This file is part of AlphaWindows
 //
@@ -62,6 +62,10 @@ HWND hFrmMain;
 HWND hFrmSend;
 //Uchwyt do okna z chmurka informacyjna
 HWND hFrmMiniStatus;
+//Uchwyt do okna z chmurka informacyjna powiadomien
+HWND hFrmNewsWidget;
+//Uchwyt do okna autoryzacji
+HWND hFrmSocialAuth;
 //Uchwyt do okna "Daj mi znac"
 HWND hFrmInfoAlert;
 //Uchwyt do okna tworzenia wycinka
@@ -91,12 +95,12 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 //FORWARD-WINDOW-PROC--------------------------------------------------------
 LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-AQQ-HOOKS----------------------------------------------------------
-int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
-int __stdcall OnColorChange(WPARAM wParam, LPARAM lParam);
-int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam);
-int __stdcall OnTabChanged(WPARAM wParam, LPARAM lPaam);
-int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
-int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam);
+INT_PTR __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
+INT_PTR __stdcall OnColorChange(WPARAM wParam, LPARAM lParam);
+INT_PTR __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam);
+INT_PTR __stdcall OnTabChanged(WPARAM wParam, LPARAM lPaam);
+INT_PTR __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
+INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam);
 //FORWARD-OTHER-FUNCTION-----------------------------------------------------
 void LoadSettings();
 //---------------------------------------------------------------------------
@@ -266,7 +270,7 @@ void SetAlphaW()
   for(int Count=0;Count<60;Count++)
   {
 	//Rekord zawiera uchwyt
-	if((WinProcTable[Count].hwnd)&&(WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
+	if((WinProcTable[Count].hwnd)&&(WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmNewsWidget)&&(WinProcTable[Count].hwnd!=hFrmSocialAuth)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
 	 SetAlphaWnd(WinProcTable[Count].hwnd);
   }
 }
@@ -281,8 +285,8 @@ void SetAlphaEx(int Value)
 	//Rekord zawiera uchwyt i okno jest widoczne oraz nie jest to okno wtyczki AlphaWindow
 	if((WinProcTable[Count].hwnd)&&(IsWindowVisible(WinProcTable[Count].hwnd))&&(WinProcTable[Count].hwnd!=hSettingsForm->Handle))
 	{
-	  //Okno nie jest chmurka informacyjna lub oknem "Daj mi znac"
-	  if((WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
+	  //Okno nie jest chmurka informacyjna, oknem z chmurka informacyjna powiadomien, oknem autoryzacji lub oknem "Daj mi znac"
+	  if((WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmNewsWidget)&&(WinProcTable[Count].hwnd!=hFrmSocialAuth)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
 	  {
 		//Ustawienie przezroczystosci
 		PluginLink.CallService(AQQ_WINDOW_TRANSPARENT,(WPARAM)WinProcTable[Count].hwnd,(LPARAM)Value);
@@ -359,6 +363,10 @@ bool CALLBACK EnumAppWindows(HWND hwnd, LPARAM lParam)
 	if((UnicodeString)WClassName=="TfrmSend") hFrmSend = hwnd;
 	//Okno chmurki informacyjnej
 	else if((UnicodeString)WClassName=="TfrmMiniStatus") hFrmMiniStatus = hwnd;
+	//Okno chmurki informacyjnej powiadomien
+	else if((UnicodeString)WClassName=="TfrmNewsWidget") hFrmNewsWidget = hwnd;
+	//Okno autoryzacji
+	else if((UnicodeString)WClassName=="TfrmSocialAuth") hFrmSocialAuth = hwnd;
 	//Okno "Daj mi znac"
 	else if((UnicodeString)WClassName=="TfrmInfoAlert") hFrmInfoAlert = hwnd;
 	//Okno tworzenia wycinka
@@ -432,6 +440,10 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		  else if((UnicodeString)WClassName=="TfrmSend") hFrmSend = hActiveFrm;
 		  //Okno chmurki informacyjnej
 		  else if((UnicodeString)WClassName=="TfrmMiniStatus") hFrmMiniStatus = hActiveFrm;
+		  //Okna chmurki informacyjnej powiadomien
+		  else if((UnicodeString)WClassName=="TfrmNewsWidget") hFrmNewsWidget = hActiveFrm;
+		  //Okno autoryzacji
+		  else if((UnicodeString)WClassName=="TfrmSocialAuth") hFrmSocialAuth = hActiveFrm;
 		  //Okno "Daj mi znac"
 		  else if((UnicodeString)WClassName=="TfrmInfoAlert") hFrmInfoAlert = hActiveFrm;
 		  //Okno tworzenia wycinka
@@ -443,7 +455,7 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		  //Okno pogladu kamerki
 		  else if((UnicodeString)WClassName=="TfrmVideoPreview") hFrmVideoPreview = hActiveFrm;
 		  //Zabezpieczenie przed bialym tlem po zamknieciu okna
-		  if(((IsWindowVisible(hLastActiveFrm))||(!hLastActiveFrm))&&(hActiveFrm!=hFrmMiniStatus)&&(hActiveFrm!=hFrmInfoAlert)&&(hActiveFrm!=hFrmMain))
+		  if(((IsWindowVisible(hLastActiveFrm))||(!hLastActiveFrm))&&(hActiveFrm!=hFrmMiniStatus)&&(hActiveFrm!=hFrmNewsWidget)&&(hActiveFrm!=hFrmSocialAuth)&&(hActiveFrm!=hFrmInfoAlert)&&(hActiveFrm!=hFrmMain))
 		  {
 			//Ustawienie przezroczystysci okna
 			SetAlphaWnd(hActiveFrm);
@@ -513,8 +525,8 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(!ForceUnloadExecuted)
   {
-	//Ustawienie przezroczystosci dla chmurki informacyjnej i okna "Daj mi znac"
-	if((hwnd==hFrmMiniStatus)||(hwnd==hFrmInfoAlert))
+	//Ustawienie przezroczystosci dla chmurki informacyjnej, okna z chmurka informacyjna powiadomien, okna autoryzacji, okna "Daj mi znac"
+	if((hwnd==hFrmMiniStatus)||(hwnd==hFrmNewsWidget)||(hwnd==hFrmInfoAlert))
 	{
 	  if(uMsg==WM_NCPAINT) SetAlphaWnd(hwnd);
 	}
@@ -536,7 +548,7 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	  }
 	  if(uMsg==WM_NCPAINT) SetAlphaWnd(hwnd);
 	  if((uMsg==WM_ERASEBKGND)&&(GetForegroundWindow()==hwnd)&&(hwnd!=hLastActiveFrm)) SetAlphaWnd(hwnd);
-	  if((uMsg==WM_SETICON)&&(hwnd==hFrmSend)) SetAlphaWnd(hwnd);
+	  if(uMsg==WM_SETICON) SetTimer(hTimerFrm,TIMER_SETALPHA,25,(TIMERPROC)TimerFrmProc);
 	}
 	//Usuniecie przezroczystosci
 	if(uMsg==WM_CLOSE)
@@ -579,7 +591,7 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 
 //Hook na wylaczenie komunikatora poprzez usera
-int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam)
 {
   //Info o rozpoczeciu procedury zamykania komunikatora
   ForceUnloadExecuted = true;
@@ -589,7 +601,7 @@ int __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 
 //Hook na zmiane kolorystyki AlphaControls
-int __stdcall OnColorChange(WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall OnColorChange(WPARAM wParam, LPARAM lParam)
 {
   //Okno ustawien zostalo juz stworzone
   if(hSettingsForm)
@@ -607,7 +619,7 @@ int __stdcall OnColorChange(WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 
 //Hook na odbieranie starej procki przekazanej przez wtyczke TabKit
-int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
 {
   //Pobieranie przekazanego uchwytu do okna
   HWND hwnd = (HWND)lParam;
@@ -624,7 +636,7 @@ int __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 
 //Hook na zmiane zakladki w oknie kontaktow
-int __stdcall OnTabChanged(WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall OnTabChanged(WPARAM wParam, LPARAM lParam)
 {
   //Ustawienie przezroczystosci wszystkich okien
   SetTimer(hTimerFrm,TIMER_SETALPHA,25,(TIMERPROC)TimerFrmProc);
@@ -634,7 +646,7 @@ int __stdcall OnTabChanged(WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 
 //Hook na zmiane kompozycji
-int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall OnThemeChanged(WPARAM wParam, LPARAM lParam)
 {
   //Okno ustawien zostalo juz stworzone
   if(hSettingsForm)
@@ -676,7 +688,7 @@ int __stdcall OnThemeChanged(WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------
 
 //Hook na zamkniecie/otwarcie okien
-int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 {
   if(!ForceUnloadExecuted)
   {
@@ -701,6 +713,10 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	  else if(ClassName=="TfrmSend") hFrmSend = hwnd;
 	  //Okno chmurki informacyjnej
 	  else if(ClassName=="TfrmMiniStatus") hFrmMiniStatus = hwnd;
+	  //Okno chmurki informacyjnej powiadomien
+	  else if(ClassName=="TfrmNewsWidget") hFrmNewsWidget = hwnd;
+	  //Okno autoryzacji
+	  else if(ClassName=="TfrmSocialAuth") hFrmSocialAuth = hwnd;
 	  //Okno "Daj mi znac"
 	  else if(ClassName=="TfrmInfoAlert") hFrmInfoAlert = hwnd;
 	  //Okno tworzenia wycinka
@@ -739,6 +755,10 @@ int __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	  if(ClassName=="TfrmSend") hFrmSend = NULL;
 	  //Okno chmurki informacyjnej
 	  else if(ClassName=="TfrmMiniStatus") hFrmMiniStatus = NULL;
+	  //Okno chmurki informacyjnej powiadomien
+	  else if(ClassName=="TfrmNewsWidget") hFrmNewsWidget = NULL;
+	  //Okno autoryzacji
+	  else if(ClassName=="TfrmSocialAuth") hFrmSocialAuth = NULL;
 	  //Okno "Daj mi znac"
 	  else if(ClassName=="TfrmInfoAlert") hFrmInfoAlert = NULL;
 	  //Okno tworzenia wycinka
@@ -842,6 +862,9 @@ void LoadSettings()
   if(Ini->ValueExists("AlphaWindows","AlphaValue"))
   {
 	AlphaValue = 255 - Ini->ReadInteger("AlphaWindows","AlphaValue",30);
+	Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
+	if(Ini->ReadBool("Settings","IgnoreTheme",false))
+	 AlphaValue = 255 - Ini->ReadInteger("Settings","AlphaValue",30);
   }
   //Wartosc przezroczystosci zdefiniowana przez wtyczke
   else
@@ -853,7 +876,7 @@ void LoadSettings()
 }
 //---------------------------------------------------------------------------
 
-extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
+extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
 {
   //Linkowanie wtyczki z komunikatorem
   PluginLink = *Link;
@@ -946,7 +969,7 @@ extern "C" int __declspec(dllexport) __stdcall Load(PPluginLink Link)
 //---------------------------------------------------------------------------
 
 //Wyladowanie wtyczki
-extern "C" int __declspec(dllexport) __stdcall Unload()
+extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
 {
   //Wyladowanie timera
   KillTimer(hTimerFrm,TIMER_CHKACTIVEWINDOW);
@@ -996,7 +1019,7 @@ extern "C" int __declspec(dllexport) __stdcall Unload()
 //---------------------------------------------------------------------------
 
 //Ustawienia wtyczki
-extern "C" int __declspec(dllexport)__stdcall Settings()
+extern "C" INT_PTR __declspec(dllexport)__stdcall Settings()
 {
   //Przypisanie uchwytu do formy ustawien
   if(!hSettingsForm)
@@ -1016,7 +1039,7 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,0,5,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,1,0,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";

@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-// Copyright (C) 2013 Krzysztof Grochocki
+// Copyright (C) 2013-2014 Krzysztof Grochocki
 //
 // This file is part of AlphaWindows
 //
@@ -24,21 +24,20 @@
 #define SettingsFrmH
 #define WM_ALPHAWINDOWS (WM_USER + 666)
 //---------------------------------------------------------------------------
-#include <System.Classes.hpp>
-#include <Vcl.Controls.hpp>
-#include <Vcl.StdCtrls.hpp>
-#include <Vcl.Forms.hpp>
 #include "sBevel.hpp"
-#include <Vcl.ExtCtrls.hpp>
-#include "sPageControl.hpp"
-#include <Vcl.ComCtrls.hpp>
-#include "sTrackBar.hpp"
+#include "sCheckBox.hpp"
+#include "sLabel.hpp"
 #include "sSkinManager.hpp"
 #include "sSkinProvider.hpp"
-#include <System.Actions.hpp>
-#include <Vcl.ActnList.hpp>
-#include "sLabel.hpp"
 #include "sTabControl.hpp"
+#include "sTrackBar.hpp"
+#include <System.Actions.hpp>
+#include <System.Classes.hpp>
+#include <Vcl.ActnList.hpp>
+#include <Vcl.ComCtrls.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.ExtCtrls.hpp>
+#include <Vcl.StdCtrls.hpp>
 //---------------------------------------------------------------------------
 class TSettingsForm : public TForm
 {
@@ -59,6 +58,7 @@ __published:	// IDE-managed Components
 	TsLabel *AlphaLabel;
 	TsLabel *ValueLabel;
 	TsSkinProvider *sSkinProvider;
+	TsCheckBox *IgnoreThemeCheckBox;
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall aExitExecute(TObject *Sender);
@@ -67,6 +67,7 @@ __published:	// IDE-managed Components
 	void __fastcall SaveButtonClick(TObject *Sender);
 	void __fastcall OKButtonClick(TObject *Sender);
 	void __fastcall sTrackBarChange(TObject *Sender);
+	void __fastcall IgnoreThemeCheckBoxClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TSettingsForm(TComponent* Owner);

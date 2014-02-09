@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-// Copyright (C) 2013 Krzysztof Grochocki
+// Copyright (C) 2013-2014 Krzysztof Grochocki
 //
 // This file is part of AlphaWindows
 //
@@ -26,12 +26,12 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "sBevel"
-#pragma link "sPageControl"
-#pragma link "sTrackBar"
+#pragma link "sCheckBox"
+#pragma link "sLabel"
 #pragma link "sSkinManager"
 #pragma link "sSkinProvider"
-#pragma link "sLabel"
 #pragma link "sTabControl"
+#pragma link "sTrackBar"
 #pragma resource "*.dfm"
 TSettingsForm *SettingsForm;
 //---------------------------------------------------------------------------
@@ -116,12 +116,12 @@ void __fastcall TSettingsForm::aLoadSettingsExecute(TObject *Sender)
   //Odczyt ustawien wtyczki
   TIniFile *Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
   sTrackBar->Position = Ini->ReadInteger("Settings","AlphaValue",30);
+  IgnoreThemeCheckBox->Checked = Ini->ReadBool("Settings","IgnoreTheme",false);
   //Sprawdzenie pliku konfiguracyjnego kompozycji
   Ini = new TIniFile(GetThemeDir()+"\\\\theme.ini");
   //Pre-konfigurowana przezroczystosc w kompozycji
-  if(Ini->ValueExists("AlphaWindows","AlphaValue"))
+  if((Ini->ValueExists("AlphaWindows","AlphaValue"))&&(!IgnoreThemeCheckBox->Checked))
    sTrackBar->Enabled = false;
-  //Wartosc przezroczystosci zdefiniowana przez wtyczke
   else
    sTrackBar->Enabled = true;
   delete Ini;
@@ -133,6 +133,7 @@ void __fastcall TSettingsForm::aSaveSettingsExecute(TObject *Sender)
 {
   TIniFile *Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
   Ini->WriteInteger("Settings","AlphaValue",sTrackBar->Position);
+  Ini->WriteBool("Settings","IgnoreTheme",IgnoreThemeCheckBox->Checked);
   delete Ini;
 }
 //---------------------------------------------------------------------------
@@ -145,6 +146,8 @@ void __fastcall TSettingsForm::SaveButtonClick(TObject *Sender)
   LoadSettings();
   //Wprowadzenie zmian w zycie
   SetAlpha();
+  //Wylaczenie przycisku
+  SaveButton->Enabled = false;
 }
 //---------------------------------------------------------------------------
 
@@ -177,3 +180,13 @@ void __fastcall TSettingsForm::sTrackBarChange(TObject *Sender)
   }
 }
 //---------------------------------------------------------------------------
+
+void __fastcall TSettingsForm::IgnoreThemeCheckBoxClick(TObject *Sender)
+{
+  //Wlaczenie przycisku
+  SaveButton->Enabled = true;
+  //Pre-konfigurowana przezroczystosc w kompozycji
+  sTrackBar->Enabled = IgnoreThemeCheckBox->Checked;
+}
+//---------------------------------------------------------------------------
+
