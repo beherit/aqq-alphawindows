@@ -8,7 +8,7 @@ Znalezione błędy wtyczki należy zgłaszać w [tym temacie](http://forum.aqq.e
 
 Kontakt z autorem
 -------
-Autorem wtyczki AlphaWindows jest Krzysztof Grochocki. Możesz skontaktować się z nim drogą mailową (kontakt@beherit.pl) lub poprzez Jabber (beherit@aqq.eu).
+Autorem wtyczki AlphaWindows jest Krzysztof Grochocki. Możesz skontaktować się z nim drogą mailową (kontakt@beherit.pl) lub poprzez Jabber (im@beherit.pl).
 
 Licencja
 -------
