@@ -513,7 +513,7 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	  //Ustawienie przezroczystosci
 	  SetAlphaW();
     }
-	
+
 	return 0;
   }
 
@@ -921,9 +921,9 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
   if(!DirectoryExists(PluginUserDir + "\\\\Shared"))
    CreateDir(PluginUserDir + "\\\\Shared");
   if(!FileExists(PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png"))
-   ExtractRes((PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png").w_str(),L"PLUGIN_RES",L"DATA");
+   ExtractRes((PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png").w_str(),L"SHARED",L"DATA");
   else if(MD5File(PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png")!="38B9FF3EF3526B3E5DC4FCA991BB3D81")
-   ExtractRes((PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png").w_str(),L"PLUGIN_RES",L"DATA");
+   ExtractRes((PluginUserDir + "\\\\Shared\\\\AlphaWindows.dll.png").w_str(),L"SHARED",L"DATA");
   //Hook na wylaczenie komunikatora poprzez usera
   PluginLink.HookEvent(AQQ_SYSTEM_BEFOREUNLOAD,OnBeforeUnload);
   //Hook na zmiane kolorystyki AlphaControls
@@ -963,7 +963,7 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
   hTimerFrm = CreateWindowEx(0, L"TAlphaWindowsTimer", L"",	0, 0, 0, 0, 0, NULL, NULL, HInstance, NULL);
   //Timer na sprawdzanie aktywnego okna
   SetTimer(hTimerFrm,TIMER_CHKACTIVEWINDOW,25,(TIMERPROC)TimerFrmProc);
-  
+
   return 0;
 }
 //---------------------------------------------------------------------------
@@ -1029,7 +1029,7 @@ extern "C" INT_PTR __declspec(dllexport)__stdcall Settings()
   }
   //Pokaznie okna ustawien
   hSettingsForm->Show();
-  
+
   return 0;
 }
 //---------------------------------------------------------------------------
@@ -1039,7 +1039,7 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,1,0,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,1,2,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";
