@@ -1,3 +1,8 @@
+1.1.2.0
+-----
+* Nieskórkowanie systemowych okien dialogowych niepochodzących z wtyczki.
+* Aktualizacja komponentów AlphaControls do nowszej wersji (9.10).
+
 1.1.0.0
 -----
 * Możliwość ignorowania wartości przeźroczystości zdefiniowanej przez kompozycję.
