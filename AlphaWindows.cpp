@@ -28,8 +28,6 @@
 #include <process.h>
 #include <inifiles.hpp>
 #include <IdHashMessageDigest.hpp>
-#define ALPHAWINDOWS_OLDPROC L"AlphaWindows/OldProc"
-#define TABKIT_OLDPROC L"TabKit/OldProc"
 #define WM_ALPHAWINDOWS (WM_USER + 666)
 
 int WINAPI DllEntryPoint(HINSTANCE hinst, unsigned long reason, void* lpReserved)
@@ -49,7 +47,6 @@ struct TWinProcTable
 {
   HWND hwnd;
   WNDPROC OldProc;
-  WNDPROC CurrentProc;
 };
 TWinProcTable WinProcTable[60];
 //PID procesu
@@ -97,7 +94,6 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-AQQ-HOOKS----------------------------------------------------------
 INT_PTR __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
 INT_PTR __stdcall OnColorChange(WPARAM wParam, LPARAM lParam);
-INT_PTR __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam);
 INT_PTR __stdcall OnTabChanged(WPARAM wParam, LPARAM lPaam);
 INT_PTR __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
 INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam);
@@ -202,18 +198,6 @@ WNDPROC ReciveOldProc(HWND hwnd)
   {
 	if(WinProcTable[Count].hwnd==hwnd)
 	 return WinProcTable[Count].OldProc;
-  }
-  return NULL;
-}
-//---------------------------------------------------------------------------
-
-//Pobieranie akualnej procki na podstawie uchwytu okna
-WNDPROC ReciveCurrentProc(HWND hwnd)
-{
-  for(int Count=0;Count<60;Count++)
-  {
-	if(WinProcTable[Count].hwnd==hwnd)
-	 return WinProcTable[Count].CurrentProc;
   }
   return NULL;
 }
@@ -394,8 +378,6 @@ bool CALLBACK EnumAppWindows(HWND hwnd, LPARAM lParam)
 		{
 		  //Zmiana procki okna + zapisanie starej procki
 		  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
-		  //Zapisanie aktualnej procki
-		  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
 		}
 	  }
 	}
@@ -474,8 +456,6 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 				  WinProcTable[Idx].hwnd = hActiveFrm;
 				  //Zmiana procki okna + zapisanie starej procki
 				  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hActiveFrm, GWLP_WNDPROC,(LONG)FrmProc);
-				  //Zapisanie aktualnej procki
-				  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hActiveFrm, GWLP_WNDPROC);
 				}
 			  }
 			}
@@ -523,6 +503,7 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  //Komunikator nie jest zamykany
   if(!ForceUnloadExecuted)
   {
 	//Ustawienie przezroczystosci dla chmurki informacyjnej, okna z chmurka informacyjna powiadomien, okna autoryzacji, okna "Daj mi znac"
@@ -553,36 +534,27 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	//Usuniecie przezroczystosci
 	if(uMsg==WM_CLOSE)
 	{
-	  //Przywrocenie starej procki
-	  if(ReciveCurrentProc(hwnd)==(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC))
-	   SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(hwnd));
-	  //Samo wyrejestrowanie hooka
-	  else
-	  {
-		//Przekazanie starej procki przez API
-		TPluginHook PluginHook;
-		PluginHook.HookName = ALPHAWINDOWS_OLDPROC;
-		PluginHook.wParam = (WPARAM)ReciveOldProc(hwnd);
-		PluginHook.lParam = (LPARAM)hwnd;
-		PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
-		//Wyrejestrowanie hooka
-		SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC));
-	  }
 	  //Usuniecie przezroczystosci
 	  RemoveAlphaWnd(hwnd);
-	  //Wskazany uchwyt znajduje sie w tablicy
-	  if(ReciveIdx(hwnd)!=-1)
-	  {
-		//Pobranie indeksu rekordu
-		int Idx = ReciveIdx(hwnd);
-		//Zapisanie starej procki do zwrotu
-		WNDPROC OldProc = WinProcTable[Idx].OldProc;
-		//Usuniecie danych w rekordzie
-		WinProcTable[Idx].hwnd = NULL;
-		WinProcTable[Idx].OldProc = NULL;
-		//Zwrot w funkcji
-		return CallWindowProc(OldProc, hwnd, uMsg, wParam, lParam);
-	  }
+	}
+  }
+  //Przypisanie starej procki do okna
+  if(uMsg==WM_CLOSE)
+  {
+	//Przywrocenie starej procki
+	SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(hwnd));
+	//Wskazany uchwyt znajduje sie w tablicy
+	if(ReciveIdx(hwnd)!=-1)
+	{
+	  //Pobranie indeksu rekordu
+	  int Idx = ReciveIdx(hwnd);
+	  //Zapisanie starej procki do zwrotu
+	  WNDPROC OldProc = WinProcTable[Idx].OldProc;
+	  //Usuniecie danych w rekordzie
+	  WinProcTable[Idx].hwnd = NULL;
+	  WinProcTable[Idx].OldProc = NULL;
+	  //Zwrot w funkcji
+	  return CallWindowProc(OldProc, hwnd, uMsg, wParam, lParam);
 	}
   }
 
@@ -612,23 +584,6 @@ INT_PTR __stdcall OnColorChange(WPARAM wParam, LPARAM lParam)
 	  hSettingsForm->sSkinManager->HueOffset = wParam;
 	  hSettingsForm->sSkinManager->Saturation = lParam;
 	}
-  }
-
-  return 0;
-}
-//---------------------------------------------------------------------------
-
-//Hook na odbieranie starej procki przekazanej przez wtyczke TabKit
-INT_PTR __stdcall OnRecvOldProc(WPARAM wParam, LPARAM lParam)
-{
-  //Pobieranie przekazanego uchwytu do okna
-  HWND hwnd = (HWND)lParam;
-  //Wskazany uchwyt znajduje sie w tablicy
-  if(ReciveIdx(hwnd)!=-1)
-  {
-	//Zmiana starej procki
-	if(ReciveCurrentProc(hwnd)==(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC))
-	 WinProcTable[ReciveIdx(hwnd)].OldProc = (WNDPROC)wParam;
   }
 
   return 0;
@@ -741,8 +696,6 @@ INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 		  WinProcTable[Idx].hwnd = hwnd;
 		  //Zmiana procki okna + zapisanie starej procki
 		  WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
-		  //Zapisanie aktualnej procki
-		  WinProcTable[Idx].CurrentProc = (WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
 		}
 	  }
 	}
@@ -771,36 +724,6 @@ INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 	  else if(ClassName=="TfrmVideoPreview") hFrmVideoPreview = NULL;
 	  //Okno instalowania dodatkow
 	  else if(ClassName=="TfrmInstallAddon") FrmInstallAddonExist = false;
-	  //Nowa procka dla okna nadal istnieje
-	  if(ReciveOldProc(hwnd))
-	  {
-		//Przywrocenie starej procki
-		if(ReciveCurrentProc(hwnd)==(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC))
-		 SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(hwnd));
-		//Samo wyrejestrowanie hooka
-		else
-		{
-		  //Przekazanie starej procki przez API
-		  TPluginHook PluginHook;
-		  PluginHook.HookName = ALPHAWINDOWS_OLDPROC;
-		  PluginHook.wParam = (WPARAM)ReciveOldProc(hwnd);
-		  PluginHook.lParam = (LPARAM)hwnd;
-		  PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
-		  //Wyrejestrowanie hooka
-		  SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC));
-		}
-		//Usuniecie przezroczystosci
-		RemoveAlphaWnd(hwnd);
-		//Wskazany uchwyt znajduje sie w tablicy
-		if(ReciveIdx(hwnd)!=-1)
-		{
-		  //Pobranie indeksu rekordu
-		  int Idx = ReciveIdx(hwnd);
-		  //Usuniecie danych w rekordzie
-		  WinProcTable[Idx].hwnd = NULL;
-		  WinProcTable[Idx].OldProc = NULL;
-		}
-	  }
 	}
   }
 
@@ -928,8 +851,6 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
   PluginLink.HookEvent(AQQ_SYSTEM_BEFOREUNLOAD,OnBeforeUnload);
   //Hook na zmiane kolorystyki AlphaControls
   PluginLink.HookEvent(AQQ_SYSTEM_COLORCHANGE,OnColorChange);
-  //Hook na odbieranie starej procki przekazanej przez wtyczke TabKit
-  PluginLink.HookEvent(TABKIT_OLDPROC,OnRecvOldProc);
   //Hook na zmiane zakladki w oknie kontaktow
   PluginLink.HookEvent(AQQ_SYSTEM_TABCHANGE, OnTabChanged);
   //Hook na zmiane kompozycji
@@ -980,7 +901,6 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
   //Wyladowanie wszystkich hookow
   PluginLink.UnhookEvent(OnBeforeUnload);
   PluginLink.UnhookEvent(OnColorChange);
-  PluginLink.UnhookEvent(OnRecvOldProc);
   PluginLink.UnhookEvent(OnTabChanged);
   PluginLink.UnhookEvent(OnThemeChanged);
   PluginLink.UnhookEvent(OnWindowEvent);
@@ -994,20 +914,7 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
 	  if(WinProcTable[Count].OldProc)
 	  {
 		//Przywrocenie starej procki
-		if(WinProcTable[Count].CurrentProc==(WNDPROC)GetWindowLongPtr(WinProcTable[Count].hwnd, GWLP_WNDPROC))
-		 SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(WinProcTable[Count].hwnd));
-		//Samo wyrejestrowanie hooka
-		else
-		{
-		  //Przekazanie starej procki przez API
-		  TPluginHook PluginHook;
-		  PluginHook.HookName = ALPHAWINDOWS_OLDPROC;
-		  PluginHook.wParam = (WPARAM)WinProcTable[Count].OldProc;
-		  PluginHook.lParam = (LPARAM)WinProcTable[Count].hwnd;
-		  PluginLink.CallService(AQQ_SYSTEM_SENDHOOK,(WPARAM)(&PluginHook),0);
-		  //Wyrejestrowanie hooka
-		  SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)(WNDPROC)GetWindowLongPtr(WinProcTable[Count].hwnd, GWLP_WNDPROC));
-		}
+		SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(WinProcTable[Count].hwnd));
 	  }
 	  //Usuwanie przezroczystosci
 	  if((!ForceUnloadExecuted)&&(!FrmInstallAddonExist)) RemoveAlphaWnd(WinProcTable[Count].hwnd);
