@@ -1,3 +1,8 @@
+1.1.3.0
+-----
+* Zmiana sposobu przywracania starych procedur okien.
+* Aktualizacja komponentów AlphaControls do nowszej wersji (9.15).
+
 1.1.2.0
 -----
 * Nieskórkowanie systemowych okien dialogowych niepochodzących z wtyczki.
