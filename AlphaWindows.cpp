@@ -946,7 +946,7 @@ extern "C" PPluginInfo __declspec(dllexport) __stdcall AQQPluginInfo(DWORD AQQVe
 {
   PluginInfo.cbSize = sizeof(TPluginInfo);
   PluginInfo.ShortName = L"AlphaWindows";
-  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,1,2,0);
+  PluginInfo.Version = PLUGIN_MAKE_VERSION(1,1,3,0);
   PluginInfo.Description = L"Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.";
   PluginInfo.Author = L"Krzysztof Grochocki (Beherit)";
   PluginInfo.AuthorMail = L"kontakt@beherit.pl";
