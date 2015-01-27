@@ -21,13 +21,12 @@
 
 #include <vcl.h>
 #include <windows.h>
-#pragma hdrstop
-#pragma argsused
-#include <PluginAPI.h>
-#include "SettingsFrm.h"
 #include <process.h>
 #include <inifiles.hpp>
 #include <IdHashMessageDigest.hpp>
+#include <PluginAPI.h>
+#pragma hdrstop
+#include "SettingsFrm.h"
 #define WM_ALPHAWINDOWS (WM_USER + 666)
 
 int WINAPI DllEntryPoint(HINSTANCE hinst, unsigned long reason, void* lpReserved)
