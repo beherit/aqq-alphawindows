@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-// Copyright (C) 2013-2014 Krzysztof Grochocki
+// Copyright (C) 2013-2015 Krzysztof Grochocki
 //
 // This file is part of AlphaWindows
 //
@@ -25,6 +25,7 @@
 #define WM_ALPHAWINDOWS (WM_USER + 666)
 //---------------------------------------------------------------------------
 #include "sBevel.hpp"
+#include "sButton.hpp"
 #include "sCheckBox.hpp"
 #include "sLabel.hpp"
 #include "sSkinManager.hpp"
@@ -43,9 +44,9 @@ class TSettingsForm : public TForm
 {
 __published:	// IDE-managed Components
 	TsBevel *Bevel;
-	TButton *OKButton;
-	TButton *CancelButton;
-	TButton *SaveButton;
+	TsButton *OKButton;
+	TsButton *CancelButton;
+	TsButton *SaveButton;
 	TsTrackBar *sTrackBar;
 	TsSkinManager *sSkinManager;
 	TActionList *ActionList;

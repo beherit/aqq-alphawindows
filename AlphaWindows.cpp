@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-// Copyright (C) 2013-2014 Krzysztof Grochocki
+// Copyright (C) 2013-2015 Krzysztof Grochocki
 //
 // This file is part of AlphaWindows
 //
@@ -25,6 +25,7 @@
 #include <inifiles.hpp>
 #include <IdHashMessageDigest.hpp>
 #include <PluginAPI.h>
+#include <LangAPI.hpp>
 #pragma hdrstop
 #include "SettingsFrm.h"
 #define WM_ALPHAWINDOWS (WM_USER + 666)
@@ -93,6 +94,7 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-AQQ-HOOKS----------------------------------------------------------
 INT_PTR __stdcall OnBeforeUnload(WPARAM wParam, LPARAM lParam);
 INT_PTR __stdcall OnColorChange(WPARAM wParam, LPARAM lParam);
+INT_PTR __stdcall OnLangCodeChanged(WPARAM wParam, LPARAM lParam);
 INT_PTR __stdcall OnTabChanged(WPARAM wParam, LPARAM lPaam);
 INT_PTR __stdcall OnThemeChanged(WPARAM wParam, LPARAM lPaam);
 INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam);
@@ -589,6 +591,29 @@ INT_PTR __stdcall OnColorChange(WPARAM wParam, LPARAM lParam)
 }
 //---------------------------------------------------------------------------
 
+//Hook na zmiane lokalizacji
+INT_PTR __stdcall OnLangCodeChanged(WPARAM wParam, LPARAM lParam)
+{
+  //Czyszczenie cache lokalizacji
+  ClearLngCache();
+  //Pobranie sciezki do katalogu prywatnego uzytkownika
+  UnicodeString PluginUserDir = GetPluginUserDir();
+  //Ustawienie sciezki lokalizacji wtyczki
+  UnicodeString LangCode = (wchar_t*)lParam;
+  LangPath = PluginUserDir + "\\\\Languages\\\\AlphaWindows\\\\" + LangCode + "\\\\";
+  if(!DirectoryExists(LangPath))
+  {
+	LangCode = (wchar_t*)PluginLink.CallService(AQQ_FUNCTION_GETDEFLANGCODE,0,0);
+	LangPath = PluginUserDir + "\\\\Languages\\\\AlphaWindows\\\\" + LangCode + "\\\\";
+  }
+  //Aktualizacja lokalizacji form wtyczki
+  for(int i=0;i<Screen->FormCount;i++)
+   LangForm(Screen->Forms[i]);
+
+  return 0;
+}
+//---------------------------------------------------------------------------
+
 //Hook na zmiane zakladki w oknie kontaktow
 INT_PTR __stdcall OnTabChanged(WPARAM wParam, LPARAM lParam)
 {
@@ -833,6 +858,34 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
   }
   //Pobranie sciezki do prywatnego folderu wtyczek
   UnicodeString PluginUserDir = GetPluginUserDir();
+  //Tworzenie katalogow lokalizacji
+  if(!DirectoryExists(PluginUserDir+"\\\\Languages"))
+   CreateDir(PluginUserDir+"\\\\Languages");
+  if(!DirectoryExists(PluginUserDir+"\\\\Languages\\\\AlphaWindows"))
+   CreateDir(PluginUserDir+"\\\\Languages\\\\AlphaWindows");
+  if(!DirectoryExists(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN"))
+   CreateDir(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN");
+  if(!DirectoryExists(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL"))
+   CreateDir(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL");
+  //Wypakowanie plikow lokalizacji
+  //D1EC5E8C3EE53CCE4D1BCF95A9ECC393
+  if(!FileExists(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng"))
+   ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng").w_str(),L"EN_SETTINGSFRM",L"DATA");
+  else if(MD5File(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng")!="D1EC5E8C3EE53CCE4D1BCF95A9ECC393")
+   ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng").w_str(),L"EN_SETTINGSFRM",L"DATA");
+  //AAEFCECD06017EB9899CF710EA9E7DC5
+  if(!FileExists(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng"))
+   ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng").w_str(),L"PL_SETTINGSFRM",L"DATA");
+  else if(MD5File(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng")!="AAEFCECD06017EB9899CF710EA9E7DC5")
+   ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng").w_str(),L"PL_SETTINGSFRM",L"DATA");
+  //Ustawienie sciezki lokalizacji wtyczki
+  UnicodeString LangCode = (wchar_t*)PluginLink.CallService(AQQ_FUNCTION_GETLANGCODE,0,0);
+  LangPath = PluginUserDir + "\\\\Languages\\\\AlphaWindows\\\\" + LangCode + "\\\\";
+  if(!DirectoryExists(LangPath))
+  {
+	LangCode = (wchar_t*)PluginLink.CallService(AQQ_FUNCTION_GETDEFLANGCODE,0,0);
+	LangPath = PluginUserDir + "\\\\Languages\\\\AlphaWindows\\\\" + LangCode + "\\\\";
+  }
   //Folder z ustawieniami wtyczki
   if(!DirectoryExists(PluginUserDir + "\\\\AlphaWindows"))
    CreateDir(PluginUserDir + "\\\\AlphaWindows");
@@ -850,6 +903,8 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
   PluginLink.HookEvent(AQQ_SYSTEM_BEFOREUNLOAD,OnBeforeUnload);
   //Hook na zmiane kolorystyki AlphaControls
   PluginLink.HookEvent(AQQ_SYSTEM_COLORCHANGE,OnColorChange);
+  //Hook na zmiane lokalizacji
+  PluginLink.HookEvent(AQQ_SYSTEM_LANGCODE_CHANGED,OnLangCodeChanged);
   //Hook na zmiane zakladki w oknie kontaktow
   PluginLink.HookEvent(AQQ_SYSTEM_TABCHANGE, OnTabChanged);
   //Hook na zmiane kompozycji
@@ -900,6 +955,7 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
   //Wyladowanie wszystkich hookow
   PluginLink.UnhookEvent(OnBeforeUnload);
   PluginLink.UnhookEvent(OnColorChange);
+  PluginLink.UnhookEvent(OnLangCodeChanged);
   PluginLink.UnhookEvent(OnTabChanged);
   PluginLink.UnhookEvent(OnThemeChanged);
   PluginLink.UnhookEvent(OnWindowEvent);
