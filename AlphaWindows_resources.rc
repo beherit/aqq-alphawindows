@@ -1,1 +1,3 @@
 SHARED DATA "Data\\AlphaWindows.dll.png"
+EN_SETTINGSFRM DATA "Languages\\EN\\TSettingsForm.lng"
+PL_SETTINGSFRM DATA "Languages\\PL\\TSettingsForm.lng"

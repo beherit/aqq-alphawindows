@@ -1,4 +1,5 @@
 object SettingsForm: TSettingsForm
+  Tag = 1
   Left = 0
   Top = 0
   BorderIcons = [biSystemMenu]
@@ -166,7 +167,8 @@ object SettingsForm: TSettingsForm
     ExplicitTop = 164
     ExplicitWidth = 335
   end
-  object OKButton: TButton
+  object OKButton: TsButton
+    Tag = 4
     Left = 90
     Top = 142
     Width = 75
@@ -175,8 +177,10 @@ object SettingsForm: TSettingsForm
     Caption = 'OK'
     TabOrder = 0
     OnClick = OKButtonClick
+    SkinData.SkinSection = 'BUTTON'
   end
-  object CancelButton: TButton
+  object CancelButton: TsButton
+    Tag = 3
     Left = 171
     Top = 142
     Width = 75
@@ -185,8 +189,10 @@ object SettingsForm: TSettingsForm
     Caption = 'Anuluj'
     TabOrder = 1
     OnClick = aExitExecute
+    SkinData.SkinSection = 'BUTTON'
   end
-  object SaveButton: TButton
+  object SaveButton: TsButton
+    Tag = 2
     Left = 252
     Top = 142
     Width = 75
@@ -196,6 +202,7 @@ object SettingsForm: TSettingsForm
     Enabled = False
     TabOrder = 2
     OnClick = SaveButtonClick
+    SkinData.SkinSection = 'BUTTON'
   end
   object sTabControl: TsTabControl
     AlignWithMargins = True
@@ -211,6 +218,7 @@ object SettingsForm: TSettingsForm
     TabOrder = 3
     SkinData.SkinSection = 'PAGECONTROL'
     object MoreLabel: TsLabel
+      Tag = 7
       Left = 267
       Top = 66
       Width = 38
@@ -218,6 +226,7 @@ object SettingsForm: TSettingsForm
       Caption = 'bardziej'
     end
     object LessLabel: TsLabel
+      Tag = 6
       Left = 16
       Top = 66
       Width = 25
@@ -225,6 +234,7 @@ object SettingsForm: TSettingsForm
       Caption = 'mniej'
     end
     object AlphaLabel: TsLabel
+      Tag = 5
       Left = 62
       Top = 16
       Width = 196
@@ -259,6 +269,7 @@ object SettingsForm: TSettingsForm
       BarOffsetH = 0
     end
     object IgnoreThemeCheckBox: TsCheckBox
+      Tag = 8
       Left = 16
       Top = 90
       Width = 250

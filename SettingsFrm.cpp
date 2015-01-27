@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------
-// Copyright (C) 2013-2014 Krzysztof Grochocki
+// Copyright (C) 2013-2015 Krzysztof Grochocki
 //
 // This file is part of AlphaWindows
 //
@@ -21,11 +21,13 @@
 
 //---------------------------------------------------------------------------
 #include <vcl.h>
+#include <LangAPI.hpp>
 #pragma hdrstop
 #include "SettingsFrm.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "sBevel"
+#pragma link "sButton"
 #pragma link "sCheckBox"
 #pragma link "sLabel"
 #pragma link "sSkinManager"
@@ -63,6 +65,8 @@ void __fastcall TSettingsForm::WMTransparency(TMessage &Message)
 
 void __fastcall TSettingsForm::FormCreate(TObject *Sender)
 {
+  //Lokalizowanie formy
+  LangForm(this);
   //Wlaczona zaawansowana stylizacja okien
   if(ChkSkinEnabled())
   {
