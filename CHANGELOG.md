@@ -1,3 +1,8 @@
+1.2.0.0
+-----
+* Obsługa lokalizacji (polskiej i angielskiej).
+* Aktualizacja komponentów AlphaControls do nowszej wersji (9.19).
+
 1.1.3.0
 -----
 * Zmiana sposobu przywracania starych procedur okien.

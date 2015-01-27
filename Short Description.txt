@@ -1,1 +1,4 @@
+PL:
 Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.
+EN:
+Allows to set transparency for all available windows in communicator.
