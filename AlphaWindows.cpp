@@ -881,10 +881,10 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
    ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng").w_str(),L"EN_SETTINGSFRM",L"DATA");
   else if(MD5File(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng")!="D1EC5E8C3EE53CCE4D1BCF95A9ECC393")
    ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\EN\\\\TSettingsForm.lng").w_str(),L"EN_SETTINGSFRM",L"DATA");
-  //AAEFCECD06017EB9899CF710EA9E7DC5
+  //DF2D4466E3044A387B9D3DD8A1F108EB
   if(!FileExists(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng"))
    ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng").w_str(),L"PL_SETTINGSFRM",L"DATA");
-  else if(MD5File(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng")!="AAEFCECD06017EB9899CF710EA9E7DC5")
+  else if(MD5File(PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng")!="DF2D4466E3044A387B9D3DD8A1F108EB")
    ExtractRes((PluginUserDir+"\\\\Languages\\\\AlphaWindows\\\\PL\\\\TSettingsForm.lng").w_str(),L"PL_SETTINGSFRM",L"DATA");
   //Ustawienie sciezki lokalizacji wtyczki
   UnicodeString LangCode = (wchar_t*)PluginLink.CallService(AQQ_FUNCTION_GETLANGCODE,0,0);
