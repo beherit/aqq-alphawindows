@@ -59,146 +59,146 @@ __fastcall TSettingsForm::TSettingsForm(TComponent* Owner)
 
 void __fastcall TSettingsForm::WMTransparency(TMessage &Message)
 {
-  Application->ProcessMessages();
-  if(sSkinManager->Active) sSkinProvider->BorderForm->UpdateExBordersPos(true,(int)Message.LParam);
+	Application->ProcessMessages();
+	if(sSkinManager->Active) sSkinProvider->BorderForm->UpdateExBordersPos(true,(int)Message.LParam);
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::FormCreate(TObject *Sender)
 {
-  //Lokalizowanie formy
-  LangForm(this);
-  //Wlaczona zaawansowana stylizacja okien
-  if(ChkSkinEnabled())
-  {
-	UnicodeString ThemeSkinDir = GetThemeSkinDir();
-	//Plik zaawansowanej stylizacji okien istnieje
-	if(FileExists(ThemeSkinDir + "\\\\Skin.asz"))
+	//Lokalizowanie formy
+	LangForm(this);
+	//Wlaczona zaawansowana stylizacja okien
+	if(ChkSkinEnabled())
 	{
-	  //Dane pliku zaawansowanej stylizacji okien
-	  ThemeSkinDir = StringReplace(ThemeSkinDir, "\\\\", "\\", TReplaceFlags() << rfReplaceAll);
-	  sSkinManager->SkinDirectory = ThemeSkinDir;
-	  sSkinManager->SkinName = "Skin.asz";
-	  //Ustawianie animacji AlphaControls
-	  if(ChkThemeAnimateWindows()) sSkinManager->AnimEffects->FormShow->Time = 200;
-	  else sSkinManager->AnimEffects->FormShow->Time = 0;
-	  sSkinManager->Effects->AllowGlowing = ChkThemeGlowing();
-	  //Zmiana kolorystyki AlphaControls
-	  sSkinManager->HueOffset = GetHUE();
-	  sSkinManager->Saturation = GetSaturation();
-	  sSkinManager->Brightness = GetBrightness();
-	  //Aktywacja skorkowania AlphaControls
-	  sSkinManager->Active = true;
+		UnicodeString ThemeSkinDir = GetThemeSkinDir();
+		//Plik zaawansowanej stylizacji okien istnieje
+		if(FileExists(ThemeSkinDir + "\\\\Skin.asz"))
+		{
+			//Dane pliku zaawansowanej stylizacji okien
+			ThemeSkinDir = StringReplace(ThemeSkinDir, "\\\\", "\\", TReplaceFlags() << rfReplaceAll);
+			sSkinManager->SkinDirectory = ThemeSkinDir;
+			sSkinManager->SkinName = "Skin.asz";
+			//Ustawianie animacji AlphaControls
+			if(ChkThemeAnimateWindows()) sSkinManager->AnimEffects->FormShow->Time = 200;
+			else sSkinManager->AnimEffects->FormShow->Time = 0;
+			sSkinManager->Effects->AllowGlowing = ChkThemeGlowing();
+			//Zmiana kolorystyki AlphaControls
+			sSkinManager->HueOffset = GetHUE();
+			sSkinManager->Saturation = GetSaturation();
+			sSkinManager->Brightness = GetBrightness();
+			//Aktywacja skorkowania AlphaControls
+			sSkinManager->Active = true;
+		}
+		//Brak pliku zaawansowanej stylizacji okien
+		else sSkinManager->Active = false;
 	}
-	//Brak pliku zaawansowanej stylizacji okien
+	//Zaawansowana stylizacja okien wylaczona
 	else sSkinManager->Active = false;
-  }
-  //Zaawansowana stylizacja okien wylaczona
-  else sSkinManager->Active = false;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::FormShow(TObject *Sender)
 {
-  //Odczyt ustawien wtyczki
-  aLoadSettings->Execute();
-  //Wylaczenie przycisku
-  SaveButton->Enabled = false;
+	//Odczyt ustawien wtyczki
+	aLoadSettings->Execute();
+	//Wylaczenie przycisku
+	SaveButton->Enabled = false;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::aExitExecute(TObject *Sender)
 {
-  //Przywrocenie ewentualnych zmian w przezroczystosci
-  SetAlpha();
-  //Zamkniecie formy
-  Close();
+	//Przywrocenie ewentualnych zmian w przezroczystosci
+	SetAlpha();
+	//Zamkniecie formy
+	Close();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::aLoadSettingsExecute(TObject *Sender)
 {
-  aLoadSettingsExec = true;
-  //Odczyt ustawien wtyczki
-  TIniFile *Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
-  sTrackBar->Position = Ini->ReadInteger("Settings","AlphaValue",30);
-  IgnoreThemeCheckBox->Checked = Ini->ReadBool("Settings","IgnoreTheme",false);
-  //Sprawdzenie pliku konfiguracyjnego kompozycji
-  Ini = new TIniFile(GetThemeDir()+"\\\\theme.ini");
-  //Pre-konfigurowana przezroczystosc w kompozycji
-  if((Ini->ValueExists("AlphaWindows","AlphaValue"))&&(!IgnoreThemeCheckBox->Checked))
-   sTrackBar->Enabled = false;
-  else
-   sTrackBar->Enabled = true;
-  delete Ini;
-  aLoadSettingsExec = false;
+	aLoadSettingsExec = true;
+	//Odczyt ustawien wtyczki
+	TIniFile *Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
+	sTrackBar->Position = Ini->ReadInteger("Settings","AlphaValue",30);
+	IgnoreThemeCheckBox->Checked = Ini->ReadBool("Settings","IgnoreTheme",false);
+	//Sprawdzenie pliku konfiguracyjnego kompozycji
+	Ini = new TIniFile(GetThemeDir()+"\\\\theme.ini");
+	//Pre-konfigurowana przezroczystosc w kompozycji
+	if((Ini->ValueExists("AlphaWindows","AlphaValue"))&&(!IgnoreThemeCheckBox->Checked))
+		sTrackBar->Enabled = false;
+	else
+		sTrackBar->Enabled = true;
+	delete Ini;
+	aLoadSettingsExec = false;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::aSaveSettingsExecute(TObject *Sender)
 {
-  TIniFile *Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
-  Ini->WriteInteger("Settings","AlphaValue",sTrackBar->Position);
-  Ini->WriteBool("Settings","IgnoreTheme",IgnoreThemeCheckBox->Checked);
-  delete Ini;
+	TIniFile *Ini = new TIniFile(GetPluginUserDir()+"\\\\AlphaWindows\\\\Settings.ini");
+	Ini->WriteInteger("Settings","AlphaValue",sTrackBar->Position);
+	Ini->WriteBool("Settings","IgnoreTheme",IgnoreThemeCheckBox->Checked);
+	delete Ini;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::SaveButtonClick(TObject *Sender)
 {
-  //Zapis ustawien
-  aSaveSettings->Execute();
-  //Zmiana ustawien w rdzeniu wtyczki
-  LoadSettings();
-  //Wprowadzenie zmian w zycie
-  SetAlpha();
-  //Wylaczenie przycisku
-  SaveButton->Enabled = false;
+	//Zapis ustawien
+	aSaveSettings->Execute();
+	//Zmiana ustawien w rdzeniu wtyczki
+	LoadSettings();
+	//Wprowadzenie zmian w zycie
+	SetAlpha();
+	//Wylaczenie przycisku
+	SaveButton->Enabled = false;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::OKButtonClick(TObject *Sender)
 {
-  //Wylaczenie buttona
-  SaveButton->Enabled = false;
-  //Zapis ustawien
-  aSaveSettings->Execute();
-  //Zmiana ustawien w rdzeniu wtyczki
-  LoadSettings();
-  //Wprowadzenie zmian w zycie
-  SetAlpha();
-  //Zamkniecie formy
-  Close();
+	//Wylaczenie buttona
+	SaveButton->Enabled = false;
+	//Zapis ustawien
+	aSaveSettings->Execute();
+	//Zmiana ustawien w rdzeniu wtyczki
+	LoadSettings();
+	//Wprowadzenie zmian w zycie
+	SetAlpha();
+	//Zamkniecie formy
+	Close();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::sTrackBarChange(TObject *Sender)
 {
-  //Pozycja nie jest zmieniana przy wczytywaniu ustawien
-  if(!aLoadSettingsExec)
-  {
-	//Wlaczenie przycisku
-	SaveButton->Enabled = true;
-	//Ustawienie wartosci w labelu
-	ValueLabel->Caption = sTrackBar->Position;
-	//Podgl¹d zmian na zywo
-	SetAlphaEx(255-sTrackBar->Position);
-  }
+	//Pozycja nie jest zmieniana przy wczytywaniu ustawien
+	if(!aLoadSettingsExec)
+	{
+		//Wlaczenie przycisku
+		SaveButton->Enabled = true;
+		//Ustawienie wartosci w labelu
+		ValueLabel->Caption = sTrackBar->Position;
+		//Podgl¹d zmian na zywo
+		SetAlphaEx(255-sTrackBar->Position);
+	}
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::IgnoreThemeCheckBoxClick(TObject *Sender)
 {
-  //Wlaczenie przycisku
-  SaveButton->Enabled = true;
-  //Pre-konfigurowana przezroczystosc w kompozycji
-  sTrackBar->Enabled = IgnoreThemeCheckBox->Checked;
+	//Wlaczenie przycisku
+	SaveButton->Enabled = true;
+	//Pre-konfigurowana przezroczystosc w kompozycji
+	sTrackBar->Enabled = IgnoreThemeCheckBox->Checked;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TSettingsForm::sSkinManagerSysDlgInit(TacSysDlgData DlgData, bool &AllowSkinning)
 {
-  AllowSkinning = false;
+	AllowSkinning = false;
 }
 //---------------------------------------------------------------------------
 
