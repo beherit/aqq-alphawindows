@@ -70,7 +70,6 @@ __published:	// IDE-managed Components
 	void __fastcall sTrackBarChange(TObject *Sender);
 	void __fastcall IgnoreThemeCheckBoxClick(TObject *Sender);
 	void __fastcall sSkinManagerSysDlgInit(TacSysDlgData DlgData, bool &AllowSkinning);
-
 private:	// User declarations
 public:		// User declarations
 	__fastcall TSettingsForm(TComponent* Owner);
