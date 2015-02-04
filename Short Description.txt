@@ -1,4 +1,4 @@
 PL:
-Pozwala na ustawienie przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien.
+Ustawia przeŸroczystoœci dla wszystkich dostêpnych w komunikatorze okien, komunikatów oraz nawet dla okien pochodz¹cych z wtyczek.
 EN:
-Allows to set transparency for all available windows in communicator.
+Sets transparency for all available windows in communicator, message forms and even windows from plugins.
