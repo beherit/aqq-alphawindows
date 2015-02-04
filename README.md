@@ -1,5 +1,5 @@
 # AlphaWindows
-AlphaWindows jest wtyczką do komunikatora [AQQ](http://www.aqq.eu/pl.php). Pozwala na ustawienie przeźroczystości dla wszystkich dostępnych w komunikatorze okien.
+AlphaWindows jest wtyczką do komunikatora [AQQ](http://www.aqq.eu/pl.php). Ustawia przeźroczystości dla wszystkich dostępnych w komunikatorze okien, komunikatów oraz nawet dla okien pochodzących z wtyczek.
 
 ### Wymagania
 Do skompilowania wtyczki AlphaWindows potrzebne jest:
