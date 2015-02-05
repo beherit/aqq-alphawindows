@@ -370,6 +370,7 @@ bool CALLBACK EnumAppWindows(HWND hwnd, LPARAM lParam)
 				//Zmiana procki okna + zapisanie starej procki
 				WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
 			}
+			else WinProcTable[Idx].OldProc = NULL;
 		}
 	}
 
@@ -457,6 +458,8 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 								WinProcTable.Length = WinProcTable.Length + 1;
 								//Zapisanie uchwytu do okna
 								WinProcTable[Idx].hwnd = hActiveFrm;
+								//Zapisanie pustej procki okna
+								WinProcTable[Idx].OldProc = NULL;
 							}
 						}
 					}
@@ -991,7 +994,7 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
 			if(WinProcTable[Count].OldProc)
 			{
 				//Przywrocenie starej procki
-				SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(WinProcTable[Count].hwnd));
+				SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)WinProcTable[Count].OldProc);
 			}
 			//Usuwanie przezroczystosci
 			if((!ForceUnloadExecuted)&&(!FrmInstallAddonExist)) RemoveAlphaWnd(WinProcTable[Count].hwnd);
