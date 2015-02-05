@@ -48,7 +48,7 @@ struct TWinProcTable
 	HWND hwnd;
 	WNDPROC OldProc;
 };
-TWinProcTable WinProcTable[60];
+DynamicArray<TWinProcTable> WinProcTable;
 //PID procesu
 DWORD ProcessPID;
 //Uchwyt do aplikacji
@@ -85,8 +85,9 @@ bool FrmInstallAddonExist = false;
 bool ForceUnloadExecuted = false;
 //TIMERY---------------------------------------------------------------------
 #define TIMER_CHKACTIVEWINDOW 10
-#define TIMER_FRMMAIN_SETALPHA 20
-#define TIMER_SETALPHA 30
+#define TIMER_CLEARTABLE 20
+#define TIMER_FRMMAIN_SETALPHA 30
+#define TIMER_SETALPHA 40
 //FORWARD-TIMER--------------------------------------------------------------
 LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //FORWARD-WINDOW-PROC--------------------------------------------------------
@@ -185,22 +186,11 @@ int GetBrightness()
 }
 //---------------------------------------------------------------------------
 
-//Pobieranie indeksu wolnego rekordu
-int ReciveFreeIdx()
-{
-	for(int Count=0;Count<60;Count++)
-	{
-		if(!WinProcTable[Count].hwnd)
-			return Count;
-	}
-	return -1;
-}
-//--------------------------------------------------------------------------
-
 //Pobieranie starej procki na podstawie uchwytu okna
 WNDPROC ReciveOldProc(HWND hwnd)
 {
-	for(int Count=0;Count<60;Count++)
+	//Przejrzenie calej tablicy
+	for(int Count=0;Count<WinProcTable.Length;Count++)
 	{
 		if(WinProcTable[Count].hwnd==hwnd)
 			return WinProcTable[Count].OldProc;
@@ -212,7 +202,8 @@ WNDPROC ReciveOldProc(HWND hwnd)
 //Pobieranie indeksu rekordu na podstawie uchwytu okna
 int ReciveIdx(HWND hwnd)
 {
-	for(int Count=0;Count<60;Count++)
+	//Przejrzenie calej tablicy
+	for(int Count=0;Count<WinProcTable.Length;Count++)
 	{
 		if(WinProcTable[Count].hwnd==hwnd)
 			return Count;
@@ -246,21 +237,17 @@ void SetAlphaWnd(HWND hwnd)
 void SetAlpha()
 {
 	//Przejrzenie calej tablicy
-	for(int Count=0;Count<60;Count++)
-	{
-		//Rekord zawiera uchwyt
-		if(WinProcTable[Count].hwnd)
-			SetAlphaWnd(WinProcTable[Count].hwnd);
-	}
+	for(int Count=0;Count<WinProcTable.Length;Count++)
+		SetAlphaWnd(WinProcTable[Count].hwnd);
 }
 //---------------------------------------------------------------------------
 void SetAlphaW()
 {
 	//Przejrzenie calej tablicy
-	for(int Count=0;Count<60;Count++)
+	for(int Count=0;Count<WinProcTable.Length;Count++)
 	{
-		//Rekord zawiera uchwyt
-		if((WinProcTable[Count].hwnd)&&(WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmNewsWidget)&&(WinProcTable[Count].hwnd!=hFrmSocialAuth)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
+		//Okno nie jest chmurka informacyjna, oknem z chmurka informacyjna powiadomien, oknem autoryzacji lub oknem "Daj mi znac"
+		if((WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmNewsWidget)&&(WinProcTable[Count].hwnd!=hFrmSocialAuth)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
 			SetAlphaWnd(WinProcTable[Count].hwnd);
 	}
 }
@@ -270,10 +257,10 @@ void SetAlphaW()
 void SetAlphaEx(int Value)
 {
 	//Przejrzenie calej tablicy
-	for(int Count=0;Count<60;Count++)
+	for(int Count=0;Count<WinProcTable.Length;Count++)
 	{
-		//Rekord zawiera uchwyt i okno jest widoczne oraz nie jest to okno wtyczki AlphaWindow
-		if((WinProcTable[Count].hwnd)&&(IsWindowVisible(WinProcTable[Count].hwnd))&&(WinProcTable[Count].hwnd!=hSettingsForm->Handle))
+		//Okno jest widoczne oraz nie jest to okno wtyczki AlphaWindow
+		if((IsWindowVisible(WinProcTable[Count].hwnd))&&(WinProcTable[Count].hwnd!=hSettingsForm->Handle))
 		{
 			//Okno nie jest chmurka informacyjna, oknem z chmurka informacyjna powiadomien, oknem autoryzacji lub oknem "Daj mi znac"
 			if((WinProcTable[Count].hwnd!=hFrmMiniStatus)&&(WinProcTable[Count].hwnd!=hFrmNewsWidget)&&(WinProcTable[Count].hwnd!=hFrmSocialAuth)&&(WinProcTable[Count].hwnd!=hFrmInfoAlert))
@@ -372,19 +359,16 @@ bool CALLBACK EnumAppWindows(HWND hwnd, LPARAM lParam)
 		{
 			//Ustawienie przezroczystosci
 			SetAlphaWnd(hwnd);
-			//Pobierane wolnego rekordu
-			int Idx = ReciveFreeIdx();
-			//Znaleziono wolny rekord
-			if(Idx!=-1)
+			//Ustawianie nowego rekordu
+			int Idx = WinProcTable.Length;
+			WinProcTable.Length = WinProcTable.Length + 1;
+			//Zapisanie uchwytu do okna
+			WinProcTable[Idx].hwnd = hwnd;
+			//Nie jest to okno wtyczki
+			if(hAppHandle==(HINSTANCE)GetWindowLong(hwnd,GWLP_HINSTANCE))
 			{
-				//Zapisanie uchwytu do okna
-				WinProcTable[Idx].hwnd = hwnd;
-				//Nie jest to okno wtyczki
-				if(hAppHandle==(HINSTANCE)GetWindowLong(hwnd,GWLP_HINSTANCE))
-				{
-					//Zmiana procki okna + zapisanie starej procki
-					WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
-				}
+				//Zmiana procki okna + zapisanie starej procki
+				WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
 			}
 		}
 	}
@@ -453,16 +437,13 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 							//Nowa procka dla okna nie istnieje
 							if(!ReciveOldProc(hActiveFrm))
 							{
-								//Pobierane wolnego rekordu
-								int Idx = ReciveFreeIdx();
-								//Znaleziono wolny rekord
-								if(Idx!=-1)
-								{
-									//Zapisanie uchwytu do okna
-									WinProcTable[Idx].hwnd = hActiveFrm;
-									//Zmiana procki okna + zapisanie starej procki
-									WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hActiveFrm, GWLP_WNDPROC,(LONG)FrmProc);
-								}
+								//Ustawianie nowego rekordu
+								int Idx = WinProcTable.Length;
+								WinProcTable.Length = WinProcTable.Length + 1;
+								//Zapisanie uchwytu do okna
+								WinProcTable[Idx].hwnd = hActiveFrm;
+								//Zmiana procki okna + zapisanie starej procki
+								WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hActiveFrm, GWLP_WNDPROC,(LONG)FrmProc);
 							}
 						}
 						//Okno pochochodzi z wtyczki
@@ -471,10 +452,11 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 							//Uchwyt do okna nie zostal jeszcze zapisany
 							if(ReciveIdx(hActiveFrm)==-1)
 							{
-								//Pobierane wolnego rekordu
-								int Idx = ReciveFreeIdx();
-								//Znaleziono wolny rekord - zapisanie uchwytu do okna
-								if(Idx!=-1) WinProcTable[Idx].hwnd = hActiveFrm;
+								//Ustawianie nowego rekordu
+								int Idx = WinProcTable.Length;
+								WinProcTable.Length = WinProcTable.Length + 1;
+								//Zapisanie uchwytu do okna
+								WinProcTable[Idx].hwnd = hActiveFrm;
 							}
 						}
 					}
@@ -483,6 +465,40 @@ LRESULT CALLBACK TimerFrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 				hLastActiveFrm = hActiveFrm;
 			}
 		}
+		//Czyszczenie tablicy z nieistniejacych okien
+		if(wParam==TIMER_CLEARTABLE)
+		{
+			//Przejrzenie calej tablicy
+			for(int Count=0;Count<WinProcTable.Length;Count++)
+			{
+				//Nie jest to okno wtyczki
+				if(hAppHandle==(HINSTANCE)GetWindowLong(WinProcTable[Count].hwnd,GWLP_HINSTANCE))
+				{
+					//Okno juz nie nie istnieje
+					if(!IsWindow(WinProcTable[Count].hwnd))
+					{
+						//Przywrocenie starej procki
+						SetWindowLongPtrW(WinProcTable[Count].hwnd, GWLP_WNDPROC,(LONG)ReciveOldProc(hwnd));
+						//Przesuniecie ostatniego rekordu
+						WinProcTable[Count].hwnd = WinProcTable[WinProcTable.Length-1].hwnd;
+						WinProcTable[Count].OldProc = WinProcTable[WinProcTable.Length-1].OldProc;
+						WinProcTable.Length = WinProcTable.Length - 1;
+					}
+				}
+				//Okno wtyczki
+				else
+				{
+					//Okno jest niewidoczne
+					if(!IsWindowVisible(WinProcTable[Count].hwnd))
+					{
+						//Przesuniecie ostatniego rekordu
+						WinProcTable[Count].hwnd = WinProcTable[WinProcTable.Length-1].hwnd;
+						WinProcTable[Count].OldProc = WinProcTable[WinProcTable.Length-1].OldProc;
+						WinProcTable.Length = WinProcTable.Length - 1;
+					}
+        }
+			}
+    }
 		//Ustawienie przezroczystosci okna kontaktow
 		if(wParam==TIMER_FRMMAIN_SETALPHA)
 		{
@@ -556,9 +572,10 @@ LRESULT CALLBACK FrmProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int Idx = ReciveIdx(hwnd);
 			//Zapisanie starej procki do zwrotu
 			WNDPROC OldProc = WinProcTable[Idx].OldProc;
-			//Usuniecie danych w rekordzie
-			WinProcTable[Idx].hwnd = NULL;
-			WinProcTable[Idx].OldProc = NULL;
+			//Przesuniecie ostatniego rekordu
+			WinProcTable[Idx].hwnd = WinProcTable[WinProcTable.Length-1].hwnd;
+			WinProcTable[Idx].OldProc = WinProcTable[WinProcTable.Length-1].OldProc;
+			WinProcTable.Length = WinProcTable.Length - 1;
 			//Zwrot w funkcji
 			return CallWindowProc(OldProc, hwnd, uMsg, wParam, lParam);
 		}
@@ -719,16 +736,13 @@ INT_PTR __stdcall OnWindowEvent(WPARAM wParam, LPARAM lParam)
 			//Nowa procka dla okna nie istnieje
 			if(!ReciveOldProc(hwnd))
 			{
-				//Pobierane wolnego rekordu
-				int Idx = ReciveFreeIdx();
-				//Znaleziono wolny rekord
-				if(Idx!=-1)
-				{
-					//Zapisanie uchwytu do okna
-					WinProcTable[Idx].hwnd = hwnd;
-					//Zmiana procki okna + zapisanie starej procki
-					WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
-				}
+				//Ustawianie nowego rekordu
+				int Idx = WinProcTable.Length;
+				WinProcTable.Length = WinProcTable.Length + 1;
+				//Zapisanie uchwytu do okna
+				WinProcTable[Idx].hwnd = hwnd;
+				//Zmiana procki okna + zapisanie starej procki
+				WinProcTable[Idx].OldProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,(LONG)FrmProc);
 			}
 		}
 		//Zamkniecie okna
@@ -943,6 +957,8 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
 	hTimerFrm = CreateWindowEx(0, L"TAlphaWindowsTimer", L"",	0, 0, 0, 0, 0, NULL, NULL, HInstance, NULL);
 	//Timer na sprawdzanie aktywnego okna
 	SetTimer(hTimerFrm,TIMER_CHKACTIVEWINDOW,25,(TIMERPROC)TimerFrmProc);
+	//Timer na czyszczenie tablicy z nieistniejacych okien
+	SetTimer(hTimerFrm,TIMER_CLEARTABLE,1000,(TIMERPROC)TimerFrmProc);
 
 	return 0;
 }
@@ -951,8 +967,9 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Load(PPluginLink Link)
 //Wyladowanie wtyczki
 extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
 {
-	//Wyladowanie timera
+	//Wyladowanie timerow
 	KillTimer(hTimerFrm,TIMER_CHKACTIVEWINDOW);
+	KillTimer(hTimerFrm,TIMER_CLEARTABLE);
 	//Usuwanie okna timera
 	DestroyWindow(hTimerFrm);
 	//Wyrejestowanie klasy okna timera
@@ -965,7 +982,7 @@ extern "C" INT_PTR __declspec(dllexport) __stdcall Unload()
 	PluginLink.UnhookEvent(OnThemeChanged);
 	PluginLink.UnhookEvent(OnWindowEvent);
 	//Usuwanie przezroczystosci i zdjemowanie hookow
-	for(int Count=0;Count<60;Count++)
+	for(int Count=0;Count<WinProcTable.Length;Count++)
 	{
 		//Rekord zawiera uchwyt do okna
 		if(WinProcTable[Count].hwnd)
