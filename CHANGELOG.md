@@ -1,3 +1,7 @@
+1.3.0.0
+-----
+* Spore zmiany optymalizacyjne w kodzie.
+
 1.2.1.0
 -----
 * Pełne wsparcie kolorystyki stylizacji okien.
