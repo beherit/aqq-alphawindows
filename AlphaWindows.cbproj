@@ -76,21 +76,19 @@
         <ILINK_TranslatedLibraryPath>$(BDSLIB)\$(PLATFORM)\release\$(LANGDIR);$(ILINK_TranslatedLibraryPath)</ILINK_TranslatedLibraryPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
-        <VerInfo_Keys>FileVersion=1.2.1.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
+        <VerInfo_Keys>FileVersion=1.3.0.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <PackageImports>acnt_R;adortl;bcbie;bcbsmp;bindcomp;bindcompdbx;bindcompfmx;bindcompvcl;bindengine;CloudService;CustomIPTransport;dbexpress;dbrtl;dbxcds;DbxClientDriver;DbxCommonDriver;DBXInterBaseDriver;DBXMySQLDriver;DBXSqliteDriver;dsnap;dsnapcon;dsnapxml;emsclient;fmx;fmxase;fmxdae;fmxobj;FMXTee;FmxTeeUI;IndyCore;IndyIPClient;IndyIPCommon;IndyIPServer;IndyProtocols;IndySystem;inet;inetdb;inetdbxpress;MetropolisUILiveTile;RESTBackendComponents;RESTComponents;rtl;soapmidas;soaprtl;soapserver;svn;Tee;TeeDB;TeeUI;tethering;vcl;vclactnband;vcldb;vcldsnap;vclie;vclimg;VCLRESTComponents;vclribbon;VclSmp;vcltouch;vclx;xmlrtl;$(PackageImports)</PackageImports>
         <IncludePath>$(BDSINCLUDE)\windows\vcl;$(IncludePath)</IncludePath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <BCC_PCHName_Clang>AlphaWindows.h</BCC_PCHName_Clang>
-        <VerInfo_Keys>FileVersion=1.2.1.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
+        <VerInfo_Keys>FileVersion=1.3.0.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
         <PackageImports>acnt_R;adortl;bindcomp;bindcompdbx;bindcompfmx;bindcompvcl;bindengine;CloudService;CustomIPTransport;dbexpress;dbrtl;dbxcds;DbxClientDriver;DbxCommonDriver;DBXInterBaseDriver;DBXMySQLDriver;DBXSqliteDriver;dsnap;dsnapcon;dsnapxml;emsclient;fmx;fmxase;fmxdae;fmxobj;FMXTee;FmxTeeUI;IndyCore;IndyIPClient;IndyIPCommon;IndyIPServer;IndyProtocols;IndySystem;inet;inetdb;inetdbxpress;MetropolisUILiveTile;RESTBackendComponents;RESTComponents;rtl;soapmidas;soaprtl;soapserver;Tee;TeeDB;TeeUI;tethering;vcl;vclactnband;vcldb;vcldsnap;vclie;vclimg;VCLRESTComponents;vclribbon;VclSmp;vcltouch;vclx;xmlrtl;$(PackageImports)</PackageImports>
         <IncludePath>$(BDSINCLUDE)\windows\vcl;$(IncludePath)</IncludePath>
     </PropertyGroup>
@@ -117,35 +115,31 @@
         <ILINK_TranslatedLibraryPath>$(BDSLIB)\$(PLATFORM)\debug\$(LANGDIR);$(ILINK_TranslatedLibraryPath)</ILINK_TranslatedLibraryPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>FileVersion=1.2.1.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_Keys>FileVersion=1.3.0.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <LinkPackageImports>rtl.bpi;vcl.bpi;IndyProtocols.bpi;IndyCore.bpi;IndySystem.bpi</LinkPackageImports>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>FileVersion=1.2.1.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_Keys>FileVersion=1.3.0.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <Defines>NDEBUG;$(Defines)</Defines>
         <TASM_Debugging>None</TASM_Debugging>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
         <ILINK_LibraryPath>$(BDS)\lib\win32\release\;C:\Users\Public\Documents\Embarcadero\Studio\15.0\DCP\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <LinkPackageStatics>rtl.lib;vcl.lib;IndyProtocols.lib;IndyCore.lib;IndySystem.lib;acnt_R.lib;vclimg.lib;vclx.lib</LinkPackageStatics>
-        <VerInfo_Keys>FileVersion=1.2.1.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
+        <VerInfo_Keys>FileVersion=1.3.0.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>FileVersion=1.2.1.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_Keys>FileVersion=1.3.0.0;ProductName=AlphaWindows;ProductVersion=1.0.0.0;CompanyName=Beherit Development;LegalCopyright=Krzysztof Grochocki;LegalTrademarks=Krzysztof Grochocki</VerInfo_Keys>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
     </PropertyGroup>
     <ItemGroup>
         <CppCompile Include="AlphaWindows.cpp">
