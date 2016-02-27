@@ -13,14 +13,14 @@ Do skompilowania wtyczki AlphaWindows potrzebne jest:
 Znalezione błędy wtyczki należy zgłaszać w [tym temacie](http://forum.aqq.eu/topic/11614-alphawindows-1020/) znajdującym na oficjalnym forum komunikatora AQQ lub pisząc bezpośrednio do autora wtyczki (preferowany kontakt poprzez Jabber).
 
 ### Kontakt z autorem
-Autorem wtyczki AlphaWindows jest Krzysztof Grochocki. Możesz skontaktować się z nim drogą mailową (kontakt@beherit.pl) lub poprzez Jabber (im@beherit.pl).
+Autorem wtyczki AlphaWindows jest Krzysztof Grochocki. Możesz skontaktować się z nim poprzez XMPP pisząc na im@beherit.pl.
 
 ### Licencja
 Wtyczka AlphaWindows objęta jest licencją [GNU General Public License 3](http://www.gnu.org/copyleft/gpl.html).
 
 ~~~~
 AlphaWindows
-Copyright (C) 2013-2015  Krzysztof Grochocki
+Copyright (C) 2013-2016  Krzysztof Grochocki
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
